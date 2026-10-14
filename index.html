@@ -97,8 +97,23 @@ button.primary:disabled{opacity:.45;cursor:default}
 .ib svg{width:16px;height:16px} .ib .sun{display:none}
 :root[data-theme="dark"] .ib .sun{display:block} :root[data-theme="dark"] .ib .moon{display:none}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .ib .sun{display:block} :root:not([data-theme="light"]) .ib .moon{display:none} }
+.sv{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;gap:12px;padding:16px;background:color-mix(in srgb, var(--bg) 82%, transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.sv[hidden]{display:none}
+.sv-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.sv-top h2{margin:0;font-size:14px;line-height:20px;font-weight:600}
+.sv-top p{margin:0;color:var(--muted);font-size:12px;line-height:16px}
+.sv-tabs{display:flex;gap:4px;margin-left:auto;padding:3px;border-radius:10px;background:var(--chip)}
+.sv-tabs button{height:28px;padding:0 10px;font-size:12px;border-radius:8px;background:transparent;color:var(--muted)}
+.sv-tabs button[aria-current="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px var(--shadow)}
+.sv-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:12px}
+.sv-stage img{max-width:100%;max-height:100%;aspect-ratio:1440/900;object-fit:contain;border-radius:12px;border:1px solid var(--line);box-shadow:0 20px 48px var(--shadow);background:var(--bg)}
+.sv-nav{flex:none;width:40px;height:40px;padding:0;border-radius:999px;display:grid;place-items:center}
+.sv-bottom{display:flex;align-items:center;gap:12px;flex-wrap:wrap;max-width:1100px;width:100%;margin:0 auto}
+.sv-bottom p{margin:0;flex:1 1 320px;color:var(--fg);font-size:13px;line-height:20px}
+.sv-bottom p b{font-weight:600}
+@media (max-width:640px){ .sv-nav{display:none} .sv-top>div:first-child{flex:1} .sv-tabs{order:3;width:100%;margin-left:0} .sv-tabs button{flex:1} .sv-tabs span{display:none} }
 .place{position:absolute;left:0;top:0;font-size:12px;color:var(--muted);white-space:nowrap;will-change:transform}
-@media (max-width:640px){ .chips{display:none} .rrow small{display:none} .hint{display:none} .card{width:auto;right:16px} }
+@media (max-width:640px){ .chips{display:none} .rrow small{display:none} .hint span{display:none} .hint{bottom:auto;top:calc(132px + env(safe-area-inset-top,0px));padding:6px} .card{width:auto;right:16px} }
 @media (prefers-reduced-motion: reduce){ .bus.crit{box-shadow:none} }
 </style>
 </head>
@@ -148,8 +163,23 @@ button.primary:disabled{opacity:.45;cursor:default}
 
 <div class="panel hint">
   <span id="hintText">Колесо или щипок — приближение · перетаскивание — поворот</span>
+  <button id="screensBtn">Экраны 00–03</button>
   <button id="overview">Обзор района</button>
 </div>
+
+<section class="sv" id="sv" hidden role="dialog" aria-modal="true" aria-labelledby="svTitle">
+  <div class="sv-top">
+    <div><h2 id="svTitle">Экраны из Figma</h2><p>Тестовое задание · тот же сценарий, что в 3D</p></div>
+    <div class="sv-tabs" id="svTabs"><button data-i="0">00<span> Норма</span></button><button data-i="1">01<span> Поломка</span></button><button data-i="2">02<span> Замена</span></button><button data-i="3">03<span> Назначено</span></button></div>
+    <button class="ib" id="svClose" aria-label="Закрыть"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="sv-stage">
+    <button class="sv-nav" id="svPrev" aria-label="Предыдущий экран"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <img id="svImg" alt="">
+    <button class="sv-nav" id="svNext" aria-label="Следующий экран"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+  <div class="sv-bottom"><p id="svCap"></p><button class="primary" id="svLive" style="flex:0 0 auto">Пройти вживую в 3D</button></div>
+</section>
 
 <script src="three.min.js"></script>
 <script>
@@ -857,6 +887,33 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', retheme);
 new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 // manual theme switch: the page starts from the system theme, the button flips it (remembered per viewer)
 try { const t = localStorage.getItem('dispatch-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+// ---------- screens 00–03 from Figma ----------
+const SV = [
+  ['00 · Норма, 14:28', 'Карта серая: из 38 бортов цвет только у тех, кому нужно внимание. Слева сводка смены и легенда маркера.'],
+  ['01 · Поломка на маршруте №10', 'Строка аварии въезжает в очередь со звуком и мигает, пока не принята. Одновременно краснеют маркер, участок маршрута и разрыв на ленте.'],
+  ['02 · Замена борта 4412', 'Резервы по времени прибытия, у каждого — борт и водитель. 4502 ближе, но с зарядом 18%: он в списке с причиной, без кнопки.'],
+  ['03 · Назначено: 4417 в пути', 'Назначено ≠ выполнено: видны шаги до конца. Разрыв на ленте становится циановым — 4417 закроет его в 14:38.'],
+];
+let svI = 0;
+const isDark = () => new THREE.Color(css('--bg')).getHSL({}).l < .3;
+function svShow(i) {
+  svI = (i + SV.length) % SV.length; const t = isDark() ? 'dark' : 'light', img = $('svImg');
+  img.src = `screen-0${svI}-${t}.webp`; img.alt = SV[svI][0];
+  $('svCap').innerHTML = `<b>${SV[svI][0]}.</b> ${SV[svI][1]}`;
+  document.querySelectorAll('#svTabs button').forEach((b, k) => b.setAttribute('aria-current', k === svI));
+}
+function svOpen() { $('sv').hidden = false; svShow(svI); $('svClose').focus();
+  ['dark', 'light'].forEach(t => [0, 1, 2, 3].forEach(k => { const im = new Image(); im.src = `screen-0${k}-${t}.webp`; })); }
+function svCloseFn() { $('sv').hidden = true; $('screensBtn').focus(); }
+$('screensBtn').addEventListener('click', svOpen);
+$('svClose').addEventListener('click', svCloseFn);
+$('svPrev').addEventListener('click', () => svShow(svI - 1));
+$('svNext').addEventListener('click', () => svShow(svI + 1));
+$('svLive').addEventListener('click', () => { svCloseFn(); fly({ target: new THREE.Vector3(W(BRK.x), 0, Z(BRK.y)), dist: 48, pol: .82 }); });
+document.querySelectorAll('#svTabs button').forEach(b => b.addEventListener('click', () => svShow(+b.dataset.i)));
+addEventListener('keydown', e => { if ($('sv').hidden) return; if (e.key === 'Escape') svCloseFn(); if (e.key === 'ArrowRight') svShow(svI + 1); if (e.key === 'ArrowLeft') svShow(svI - 1); });
+new MutationObserver(() => { if (!$('sv').hidden) svShow(svI); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
 document.getElementById('theme').addEventListener('click', () => {
   const dark = new THREE.Color(css('--bg')).getHSL({}).l < .3, next = dark ? 'light' : 'dark';
   document.documentElement.dataset.theme = next; try { localStorage.setItem('dispatch-theme', next); } catch (e) {}

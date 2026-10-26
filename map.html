@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Живой прототип диспетчерской: авария на маршруте №10, выбор резерва и его путь по городу. Режимы «Карта района» и «3D», рядом — рабочий экран смены. Светлая и тёмная тема.">
 <meta property="og:title" content="Диспетчерская 3D · Баатр Утнасунов">
@@ -1115,7 +1116,7 @@ var OPS = null, curStep = 0;
     const stem = (x, c = 'var(--text-muted)') => `<i class="stem" style="left:${x}px;background:${c}"></i>`;
     return `<div class="o-panel o-rib${v === '03' ? ' fixing' : ''}">
       <span class="p o-t14" style="left:15px;top:11px">Маршрут №10 · лента интервалов</span>
-      <span class="p o-c12 o-mut" style="left:15px;top:33px;white-space:pre">План 6 мин  ·  сейчас ${crit ? '6–14' : '6–7'} мин  ·  7 бортов на линии</span>
+      <span class="p o-c12 o-mut" style="left:15px;top:33px;white-space:pre">План 6 мин  ·  сейчас ${crit ? '6–10' : '6–7'} мин  ·  7 бортов на линии</span>
       <span class="p o-c12 o-mut" style="left:808px;top:13px">Шкала: от «Вокзала» к «Северной»</span>
       <i class="p" style="left:23px;top:116px;width:984px;height:2px;background:var(--surface-4)"></i>
       ${crit ? `<i class="p" style="left:465.8px;top:108px;width:167.28px;height:18px;border-radius:4px;background:${gapSoft}"></i><i class="p" style="left:465.8px;top:116px;width:167.28px;height:2px;background:${gapCol}"></i>` : ''}

@@ -510,7 +510,6 @@ stage.addEventListener('click', e => {
   const a = e.target.closest('[data-act]'); if (!a) return;
   const act = a.dataset.act;
   if (act === 'theme') { toggleTheme(); }
-  else if (false) { const dark = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim().toLowerCase() === '#121417'; const n = dark ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('dispatch-theme', n); } catch (err) {} }
   else if (act === 'next') { if (S.step === 0) go(1); else if (S.step === 2) { S.phone = true; render(); } else if (S.step === 3) go(4); else if (S.step === 4) go(0); }
   else if (act === 'hold') toast('Команда ушла водителю В 412 КО: стоянка 2 мин на ближайшей остановке');
   else if (act === 'toast') toast(a.dataset.msg);
@@ -531,8 +530,8 @@ function fit() {
   root.classList.toggle('narrow', narrow);
   if (narrow) { const k = Math.min(1, innerHeight / 900); stage.style.transform = `scale(${k})`; sizer.style.width = 1440 * k + 'px'; sizer.style.height = 900 * k + 'px'; }
   else { stage.style.transform = `translate(${(innerWidth - 1440 * s) / 2}px, ${(innerHeight - 900 * s) / 2}px) scale(${s})`; sizer.style.width = sizer.style.height = '1px'; }
-  // the shared top-right controls sit in the screen's own corner, not the window's
-  const hud = document.querySelector('.modes'); hud.style.right = (narrow ? 16 : (innerWidth - 1440 * s) / 2 + 16 * s) + 'px'; hud.style.top = (narrow ? 16 : (innerHeight - 900 * s) / 2 + 16 * s) + 'px';
+  // the shared top-right controls stay in the window's corner on every screen, so they never jump between modes
+  const hud = document.querySelector('.modes'); hud.style.right = '16px'; hud.style.top = (narrow ? 16 : 23) + 'px';
 }
 try { const t = localStorage.getItem('dispatch-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
 addEventListener('resize', fit); fit();

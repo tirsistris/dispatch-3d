@@ -37,8 +37,7 @@
 .modes .msep{width:1px;background:var(--ML);margin:6px 4px}
 .modes a.on{background:var(--MA);color:var(--MF);font-weight:600}
 :root{--MB:var(--panel);--ML:var(--line);--MS:var(--shadow);--MM:var(--muted);--MA:var(--chip);--MF:var(--fg)}
-@media (min-width:700px){.top{padding-right:300px}}
-.o-top{padding-right:400px!important}
+.o-top{padding-right:var(--hudpad,400px)!important}
 @media (min-width:700px){.top{padding-right:400px}}
 .modes .moon,.modes .sun{width:16px;height:16px}
 /* Layout: full-bleed WebGL city; glass panels float at the corners, like the Figma dispatcher kit */
@@ -1218,8 +1217,11 @@ var OPS = null, curStep = 0;
   // A dispatcher works at a desk; on a phone the 1440×900 screen keeps a readable scale and pans sideways instead of shrinking to a thumbnail.
   const sizer = document.createElement('div'); sizer.className = 'o-sizer'; root.appendChild(sizer);
   OPS.place = function () { const hud = document.querySelector('.modes'); const s = Math.min(innerWidth / 1440, innerHeight / 900);
-    if (mode === '2d' && s >= .6) { hud.style.right = (innerWidth - 1440 * s) / 2 + 16 * s + 'px'; hud.style.top = (innerHeight - 900 * s) / 2 + 16 * s + (52 * s - hud.offsetHeight) / 2 + 'px'; }
-    else { const bar = document.querySelector('.top'), r = bar.getBoundingClientRect(); hud.style.right = '16px'; hud.style.top = Math.max(16, r.top + (r.height - hud.offsetHeight) / 2) + 'px'; } };
+    // always the window's top-right corner, like on the shift screen; the 2D top bar only reserves room when the cluster actually overlaps it
+    hud.style.right = '16px';
+    if (mode === '2d' && s >= .6) { const margin = (innerWidth - 1440 * s) / 2, over = hud.offsetWidth + 32 - margin; root.style.setProperty('--hudpad', Math.max(12, over / s) + 'px'); hud.style.top = '23px'; }
+    else if (innerWidth >= 700) hud.style.top = '23px';
+    else { const bar = document.querySelector('.top'), r = bar.getBoundingClientRect(); hud.style.top = Math.max(16, r.top + (r.height - hud.offsetHeight) / 2) + 'px'; } };
   OPS.fit = function () {
     const fitS = Math.min(innerWidth / 1440, innerHeight / 900), narrow = fitS < .6;
     root.classList.toggle('narrow', narrow);

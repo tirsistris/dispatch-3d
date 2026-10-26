@@ -3,1006 +3,226 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Живой прототип диспетчерской: авария на маршруте №10, выбор резерва и его путь по городу. 2D · работа / 3D · обзор, светлая и тёмная тема.">
-<meta property="og:title" content="Диспетчерская 3D · Баатр Утнасунов">
-<meta property="og:description" content="Авария на маршруте №10 и замена резервом — живой 3D-прототип.">
-<meta name="theme-color" content="#0E0F11" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#E2E4E7" media="(prefers-color-scheme: light)">
-<title>Диспетчерская 3D</title>
+<meta name="description" content="Живой прототип диспетчерской: рабочий экран смены, авария на маршруте №10, замена резервом, подтверждение водителя и разбор. Режимы: смена, карта района, 3D.">
+<meta property="og:title" content="Диспетчерская · Баатр Утнасунов">
+<meta property="og:description" content="Рабочий экран диспетчера: смена, авария, замена резервом, разбор — живой прототип.">
+<meta name="theme-color" content="#121417" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#E4E5E7" media="(prefers-color-scheme: light)">
+<title>Диспетчерская · смена</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: full-bleed WebGL city; glass panels float at the corners, like the Figma dispatcher kit */
+/* The shift screen from Figma (page «v3 · Рабочий экран», 1440×900): panels float over a real-city map.
+   Tokens = Figma variables «Color», modes Light / Dark. */
 :root{
-  --bg:#E2E4E7; --bg-hi:#F7F8F9; --bg-lo:#CDD1D6; --panel:rgba(255,255,255,.86); --fg:#171717; --muted:#5C5C5C; --line:rgba(0,0,0,.10);
-  --crit:#C8261A; --crit-soft:rgba(200,38,26,.12); --delay:#B25E00; --res:#0B6E9C; --res-soft:rgba(11,110,156,.12);
-  --chip:#EBEBEB; --primary:#171717; --on-primary:#FFFFFF;
-  --ground:#E3E5E8; --slab-l:#C3C8CE; --slab-r:#B1B7BE; --bldg:#FAFBFC; --bldg-l:#DDE0E4; --bldg-r:#C7CCD2; --edge:#9AA1A9;
-  --roof-tile:#C9C2B8; --dome:#D6C9A4; --lamp:#DCDFE3; --ballast:#C4C8CD; --pad:#EDEFF1; --pad-side:#C9CED4; --street:#D3D6DA; --avenue:#C6CACF; --lane:#F2F3F5; --bus-body:#FBFBFC; --bus-roof:#8E949B; --glass:#2B3036; --batt:#5E646B; --water:#BCCEDC; --park:#CCDBCF; --tree:#A9C1AF; --route:#2B2D31; --shadow:rgba(0,0,0,.12);
-  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bg:#E4E5E7; --s1:#F8F9FA; --s2:#EFF1F3; --s3:#E5E8EB; --s4:#D9DDE1; --fg:#1B1D20; --muted:#5C5C5C;
+  --line:rgba(0,0,0,.10); --line2:rgba(0,0,0,.16); --hover:rgba(0,0,0,.04); --sel:rgba(0,0,0,.07);
+  --delay:#B25E00; --delay-soft:rgba(178,94,0,.14); --crit:#C8261A; --crit-soft:rgba(200,38,26,.12);
+  --res:#0B6E9C; --res-soft:rgba(11,110,156,.12); --ok:#6E7176; --ok-soft:rgba(0,0,0,.06);
+  --acc:#0F7B5F; --on-acc:#FFFFFF; --acc-soft:rgba(15,123,95,.10); --route:#2B2D31; --shadow:rgba(0,0,0,.12);
+  --on-status:#FFFFFF; --map:url(osm-light.webp);
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#0E0F11; --bg-hi:#1C1E22; --bg-lo:#060607; --panel:rgba(36,38,43,.86); --fg:#F5F5F5; --muted:#A3A3A3; --line:rgba(255,255,255,.14);
-  --crit:#FF4D3D; --crit-soft:rgba(255,77,61,.16); --delay:#F2B33D; --res:#4FB3E0; --res-soft:rgba(79,179,224,.14);
-  --chip:#333333; --primary:#F5F5F5; --on-primary:#171717;
-  --ground:#141518; --slab-l:#0B0B0D; --slab-r:#060607; --bldg:#2E3136; --bldg-l:#212328; --bldg-r:#18191D; --edge:#4A4E55;
-  --roof-tile:#34302B; --dome:#6B5F43; --lamp:#FFD49A; --ballast:#1B1C1F; --pad:#17181B; --pad-side:#0C0D0F; --street:#22242A; --avenue:#2A2C31; --lane:#3A3D43; --bus-body:#C9CDD3; --bus-roof:#6E7176; --glass:#0B0C0E; --batt:#3A3D43; --water:#16232E; --park:#16221B; --tree:#22352A; --route:#D4D4D4; --shadow:rgba(0,0,0,.5);
-  color-scheme:dark }}
+  --bg:#121417; --s1:#1C1E22; --s2:#23262B; --s3:#2E3137; --s4:#3A3E45; --fg:#E9EAEC; --muted:#A3A3A3;
+  --line:rgba(255,255,255,.14); --line2:rgba(255,255,255,.16); --hover:rgba(255,255,255,.06); --sel:rgba(255,255,255,.10);
+  --delay:#E9AE45; --delay-soft:rgba(233,174,69,.14); --crit:#F2584B; --crit-soft:rgba(242,88,75,.16);
+  --res:#4FB3E0; --res-soft:rgba(79,179,224,.14); --ok:#D4D4D4; --ok-soft:rgba(255,255,255,.10);
+  --acc:#3BB98C; --on-acc:#0B1F18; --acc-soft:rgba(59,185,140,.14); --route:#D4D4D4; --shadow:rgba(0,0,0,.45);
+  --on-status:#171717; --map:url(osm-dark.webp); color-scheme:dark }}
 :root[data-theme="dark"]{
-  --bg:#0E0F11; --bg-hi:#1C1E22; --bg-lo:#060607; --panel:rgba(36,38,43,.86); --fg:#F5F5F5; --muted:#A3A3A3; --line:rgba(255,255,255,.14);
-  --crit:#FF4D3D; --crit-soft:rgba(255,77,61,.16); --delay:#F2B33D; --res:#4FB3E0; --res-soft:rgba(79,179,224,.14);
-  --chip:#333333; --primary:#F5F5F5; --on-primary:#171717;
-  --ground:#141518; --slab-l:#0B0B0D; --slab-r:#060607; --bldg:#2E3136; --bldg-l:#212328; --bldg-r:#18191D; --edge:#4A4E55;
-  --roof-tile:#34302B; --dome:#6B5F43; --lamp:#FFD49A; --ballast:#1B1C1F; --pad:#17181B; --pad-side:#0C0D0F; --street:#22242A; --avenue:#2A2C31; --lane:#3A3D43; --bus-body:#C9CDD3; --bus-roof:#6E7176; --glass:#0B0C0E; --batt:#3A3D43; --water:#16232E; --park:#16221B; --tree:#22352A; --route:#D4D4D4; --shadow:rgba(0,0,0,.5);
-  color-scheme:dark }
-html,body{height:100%}
-body{background:radial-gradient(ellipse 75% 70% at 50% 48%, var(--bg-hi), var(--bg-lo)) var(--bg);color:var(--fg);font:13px/20px var(--font);overflow:hidden;font-variant-numeric:tabular-nums}
-#stage{position:fixed;inset:0;touch-action:none;cursor:grab}
-#stage.drag{cursor:grabbing}
-#labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
-.panel{position:fixed;background:var(--panel);border:1px solid var(--line);border-radius:12px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 12px 32px var(--shadow)}
-.top{top:calc(16px + env(safe-area-inset-top,0px));left:16px;right:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px 8px 16px;flex-wrap:wrap}
-.top h1{font-size:14px;line-height:20px;font-weight:600;margin:0}
-.top p{margin:0;color:var(--muted);font-size:12px;line-height:16px}
-.chips{display:flex;gap:8px;flex-wrap:wrap}
-.chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:8px;background:var(--chip);font-size:12px}
-.chip i{width:6px;height:6px;border-radius:50%;background:var(--muted)}
-.chip.crit{background:var(--crit-soft)} .chip.crit i{background:var(--crit);border-radius:1px;transform:rotate(45deg)}
-.chip.res{background:var(--res-soft)} .chip.res i{background:var(--res)}
-.clock{font-size:16px;font-weight:600}
-.card{left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:360px;max-width:calc(100% - 32px);padding:16px;display:flex;flex-direction:column;gap:12px}
-.alert{display:flex;gap:12px;padding:12px;border-radius:12px;background:var(--crit-soft);border:1.5px solid var(--crit)}
-.alert.calm{border-color:var(--res);background:var(--res-soft)}
-.tile{flex:none;width:32px;height:32px;border-radius:8px;background:var(--crit);display:grid;place-items:center;color:var(--on-primary)}
-.alert.calm .tile{background:var(--res)}
-.alert b{display:block;font-size:14px;line-height:20px;font-weight:600}
-.alert span{color:var(--muted);font-size:12px;line-height:16px}
-.steps[hidden]{display:none} .steps{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
-.steps li{display:flex;align-items:center;gap:10px;color:var(--muted)}
-.steps li.done{color:var(--fg)} .steps li.now{color:var(--fg)}
-.steps li::before{content:"";width:12px;height:12px;border-radius:50%;border:1.5px solid var(--line);flex:none}
-.steps li.done::before{background:var(--fg);border-color:var(--fg)}
-.steps li.now::before{border-color:var(--res);background:var(--res-soft)}
-.steps time{margin-left:auto;font-size:12px}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-button{font:inherit;height:36px;padding:0 16px;border-radius:8px;border:0;cursor:pointer;color:var(--fg);background:var(--chip)}
-button.primary{background:var(--primary);color:var(--on-primary);flex:1 1 auto}
-button:focus-visible{outline:2px solid var(--res);outline-offset:2px}
-.hint{right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));padding:8px 12px;color:var(--muted);font-size:12px;line-height:16px;display:flex;gap:12px;flex-wrap:wrap;max-width:calc(100% - 32px)}
-.hint button{height:28px;padding:0 12px;font-size:12px}
-.bus{position:absolute;left:0;top:0;display:flex;align-items:center;gap:4px;height:22px;padding:0 8px 0 6px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--panel);color:var(--fg);border:1px solid var(--line);will-change:transform;backdrop-filter:blur(8px)}
-.bus svg{width:12px;height:12px}
-.bus.delay em{color:var(--delay);font-style:normal;font-weight:400}
-.bus.delay svg{color:var(--delay)}
-.bus.res{color:var(--res);border-color:var(--res)}
-.bus.crit{background:var(--crit);color:var(--on-primary);border-color:var(--crit);box-shadow:0 0 16px var(--crit)}
-.bus.res,.bus.sel{pointer-events:auto;cursor:pointer}
-.bus.sel{background:var(--res);color:var(--on-primary);border-color:var(--res)}
-.resv[hidden]{display:none} .resv{display:flex;flex-direction:column;gap:6px}
-.res-h{display:flex;justify-content:space-between;align-items:baseline}
-.res-h b{font-size:13px;font-weight:600} .res-h span{font-size:12px;color:var(--muted)}
-.rrow{all:unset;box-sizing:border-box;display:grid;grid-template-columns:auto 1fr auto;column-gap:8px;row-gap:2px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);cursor:pointer}
-.rrow:focus-visible{outline:2px solid var(--res);outline-offset:2px}
-.rrow b{font-size:14px;font-weight:600} .rrow em{font-style:normal;font-size:12px;color:var(--res);align-self:center}
-.rrow time{font-size:14px;font-weight:600;justify-self:end} .rrow small{grid-column:1/-1;font-size:12px;line-height:16px;color:var(--muted)}
-.rrow.sel{border-color:var(--res);background:var(--res-soft);box-shadow:inset 0 0 0 .5px var(--res)}
-.rrow.off{cursor:default;opacity:.7} .rrow.off time{color:var(--muted);font-weight:400;font-size:12px}
-.rrow.off small i{color:var(--delay);font-style:normal}
-button.primary:disabled{opacity:.45;cursor:default}
-.seg{display:inline-flex;padding:3px;border-radius:10px;background:var(--chip);gap:2px}
-.seg button{height:28px;padding:0 12px;font-size:12px;border-radius:8px;background:transparent;color:var(--muted)}
-.seg button[aria-pressed="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px var(--shadow)}
-.tr{display:flex;align-items:center;gap:12px}
-.ib{width:34px;height:34px;padding:0;display:grid;place-items:center;border-radius:10px;background:var(--chip);color:var(--fg)}
-.ib svg{width:16px;height:16px} .ib .sun{display:none}
-:root[data-theme="dark"] .ib .sun{display:block} :root[data-theme="dark"] .ib .moon{display:none}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .ib .sun{display:block} :root:not([data-theme="light"]) .ib .moon{display:none} }
-.place{position:absolute;left:0;top:0;font-size:12px;color:var(--muted);white-space:nowrap;will-change:transform}
-@media (max-width:640px){ .chips{display:none} .rrow small{display:none} .hint span{display:none} .hint{bottom:auto;top:calc(132px + env(safe-area-inset-top,0px));padding:6px} .card{width:auto;right:16px} }
-@media (prefers-reduced-motion: reduce){ .bus.crit{box-shadow:none} }
-/* ---------- 2D · работа: the dispatcher screen from Figma, built in HTML/CSS on the file's own tokens ---------- */
-:root{
-  --bg-map:#e4e5e7; --surface-1:#ffffff; --surface-2:#f5f5f5; --surface-3:#ebebeb; --surface-4:#e0e0e0;
-  --state-selected:rgba(0,0,0,.07); --border-subtle:rgba(0,0,0,.1); --border-strong:rgba(0,0,0,.16);
-  --text-fg:#171717; --text-muted:#5c5c5c; --status-ok-soft:rgba(0,0,0,.06);
-  --status-delay:#b25e00; --status-delay-soft:rgba(178,94,0,.14); --status-critical:#c8261a; --status-critical-soft:rgba(200,38,26,.12);
-  --status-reserve:#0b6e9c; --status-reserve-soft:rgba(11,110,156,.12);
-  --action-primary:#171717; --action-on-primary:#ffffff; --action-secondary:rgba(0,0,0,.08);
-  --border-marker:#6e7176; --marker-load:rgba(0,0,0,.12); --o-shadow:0 8px 24px rgba(0,0,0,.12); --o-scrim:rgba(255,255,255,.35); --o-map:url(map-light.webp);
-}
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg-map:#111214; --surface-1:#1f2024; --surface-2:#252525; --surface-3:#333333; --surface-4:#414141;
-  --state-selected:rgba(255,255,255,.1); --border-subtle:rgba(255,255,255,.14); --border-strong:rgba(255,255,255,.16);
-  --text-fg:#f5f5f5; --text-muted:#a3a3a3; --status-ok-soft:rgba(255,255,255,.1);
-  --status-delay:#f2b33d; --status-delay-soft:rgba(242,179,61,.14); --status-critical:#ff4d3d; --status-critical-soft:rgba(255,77,61,.16);
-  --status-reserve:#4fb3e0; --status-reserve-soft:rgba(79,179,224,.14);
-  --action-primary:#f5f5f5; --action-on-primary:#171717; --action-secondary:rgba(255,255,255,.25);
-  --border-marker:#707070; --marker-load:rgba(255,255,255,.18); --o-shadow:0 8px 24px rgba(0,0,0,.45); --o-scrim:rgba(0,0,0,.25); --o-map:url(map-dark.webp);
-}}
-:root[data-theme="dark"]{
-  --bg-map:#111214; --surface-1:#1f2024; --surface-2:#252525; --surface-3:#333333; --surface-4:#414141;
-  --state-selected:rgba(255,255,255,.1); --border-subtle:rgba(255,255,255,.14); --border-strong:rgba(255,255,255,.16);
-  --text-fg:#f5f5f5; --text-muted:#a3a3a3; --status-ok-soft:rgba(255,255,255,.1);
-  --status-delay:#f2b33d; --status-delay-soft:rgba(242,179,61,.14); --status-critical:#ff4d3d; --status-critical-soft:rgba(255,77,61,.16);
-  --status-reserve:#4fb3e0; --status-reserve-soft:rgba(79,179,224,.14);
-  --action-primary:#f5f5f5; --action-on-primary:#171717; --action-secondary:rgba(255,255,255,.25);
-  --border-marker:#707070; --marker-load:rgba(255,255,255,.18); --o-shadow:0 8px 24px rgba(0,0,0,.45); --o-scrim:rgba(0,0,0,.25); --o-map:url(map-dark.webp);
-}
-body.mode-2d .top, body.mode-2d .card, body.mode-2d .hint, body.mode-2d #labels, body.mode-2d #stage{visibility:hidden}
-#ops *{box-sizing:border-box}
-#ops :is(.o-bus,.o-row,.o-card,.o-x){height:auto}
-#ops{position:fixed;inset:0;z-index:5;background:var(--bg-map);overflow:hidden;display:none;font:13px/20px var(--font);color:var(--text-fg)}
-body.mode-2d #ops{display:block}
-.o-stage{position:absolute;left:0;top:0;width:1440px;height:900px;transform-origin:0 0}
-#ops.narrow{overflow:auto;-webkit-overflow-scrolling:touch} #ops .o-sizer{position:absolute;left:0;top:0;width:1px;height:1px;pointer-events:none}
-.o-back{position:fixed;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:6;display:none;height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--border-subtle);background:var(--surface-1);color:var(--text-fg);font:600 13px/20px var(--font);box-shadow:var(--o-shadow)}
-body.mode-2d #ops.narrow ~ .o-back{display:block}
-.o-map{position:absolute;inset:0;background:var(--o-map) center/1440px 900px no-repeat}
-.o-scrim{position:absolute;inset:0;background:var(--o-scrim);opacity:0;transition:opacity .3s;pointer-events:none}
-.o-stage[data-v="02"] .o-scrim,.o-stage[data-v="03"] .o-scrim{opacity:1}
-.oi{flex:none;display:block} .oring{flex:none;display:block}
-.o-abs{position:absolute}
-.o-panel{position:absolute;background:var(--surface-1);border:1px solid var(--border-subtle);border-radius:12px;box-shadow:var(--o-shadow);overflow:hidden}
-.o-t16{font-size:16px;line-height:22px;font-weight:600} .o-t14{font-size:14px;line-height:20px;font-weight:600}
-.o-c12{font-size:12px;line-height:16px} .o-mut{color:var(--text-muted)} .o-b13{font-size:13px;line-height:20px}
-/* top bar */
-.o-top{left:16px;top:16px;width:1408px;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 12px 0 16px}
-.o-badges{display:flex;gap:8px;position:absolute;left:50%;transform:translateX(-50%)}
-.o-badge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:8px;font-size:12px;line-height:16px;white-space:nowrap}
-.o-badge.ok{background:var(--status-ok-soft)} .o-badge.ok i{width:6px;height:6px;border-radius:50%;background:var(--text-muted)}
-.o-badge.delay{background:var(--status-delay-soft);color:var(--text-fg)} .o-badge.delay .oi{color:var(--status-delay)}
-.o-badge.crit{background:var(--status-critical-soft)} .o-badge.crit .oi{color:var(--status-critical)}
-.o-badge.res{background:var(--status-reserve-soft)} .o-badge.res .oi{color:var(--status-reserve)}
-.o-right{display:flex;align-items:center;gap:12px}
-.o-right .seg{background:var(--surface-3)} .o-right .seg button[aria-pressed="true"]{background:var(--surface-1);color:var(--text-fg)}
-.o-right .seg button{color:var(--text-muted)}
-.o-right .ib{background:var(--surface-3);color:var(--text-fg);width:28px;height:28px;border-radius:8px}
-.o-right .ib svg{width:14px;height:14px}
-/* incidents */
-.o-inc{left:16px;top:80px;width:360px;padding:12px;display:flex;flex-direction:column;gap:12px}
-.o-row{display:flex;gap:12px;padding:12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border-subtle);align-items:center;cursor:pointer;text-align:left;width:100%;font:inherit;color:inherit}
-.o-row.alert{background:var(--status-critical-soft);border:2px solid var(--status-critical);align-items:flex-start;padding:11px}
-.o-row.alert.blink{animation:oblink 1.1s steps(1) infinite}
-@keyframes oblink{50%{border-color:transparent}}
-@media (prefers-reduced-motion: reduce){ .o-row.alert.blink{animation:none} }
-.o-row.enter{animation:oin .45s cubic-bezier(.2,.8,.2,1)}
-@keyframes oin{from{transform:translateY(-12px);opacity:0}}
-.o-tile{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex:none}
-.o-tile.crit{background:var(--status-critical);color:var(--action-on-primary)} .o-tile.delay{background:var(--status-delay-soft);color:var(--status-delay)}
-.o-tile.ack{background:var(--status-critical-soft);color:var(--status-critical)}
-.o-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.o-txt b{font-size:14px;line-height:20px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.o-txt span{font-size:12px;line-height:16px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.o-acts{display:flex;gap:12px;align-items:center;padding-top:8px}
-.o-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 16px;border-radius:8px;border:0;font:13px/20px var(--font);cursor:pointer;background:var(--action-primary);color:var(--action-on-primary);white-space:nowrap}
-.o-btn.sm{height:28px;padding:0 12px;gap:4px;font-size:12px}
-.o-btn.sec{background:var(--action-secondary);color:var(--text-fg)} .o-btn.ghost{background:transparent;color:var(--text-muted)}
-.o-btn:focus-visible,.o-row:focus-visible,.o-card:focus-visible,.o-x:focus-visible,.o-bus:focus-visible{outline:2px solid var(--status-reserve);outline-offset:2px}
-.o-snd{display:flex;gap:4px;align-items:center;font-size:12px;line-height:16px;color:var(--text-muted)} .o-snd .oi{color:var(--status-critical)}
-.o-rt{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:12px;line-height:16px;color:var(--text-muted);flex:none}
-.o-rt .new{color:var(--status-critical)}
-.o-div{height:1px;background:var(--border-subtle);width:100%}
-.o-res{display:flex;gap:8px;align-items:center;font-size:12px;line-height:16px;color:var(--text-muted)}
-/* shift summary */
-.o-sum{left:16px;width:360px;padding:16px;display:flex;flex-direction:column;gap:16px}
-.o-sum.col{flex-direction:row;align-items:center;gap:8px;padding:10px 16px;height:42px;cursor:pointer}
-.o-kv{display:flex;gap:8px;align-items:baseline;white-space:nowrap}
-.o-spark{position:relative;width:328px;height:54px}
-.o-heat{position:relative;width:328px;height:30px}
-.o-heat i{position:absolute;top:0;height:12px;width:33.33px;border-radius:3px;background:var(--text-fg)}
-.o-rings{display:flex;gap:9px}
-/* legend */
-.o-leg{left:16px;top:700px;width:360px;padding:12px;display:flex;flex-direction:column;gap:10px}
-.o-leg .r{display:flex;gap:10px;align-items:center;font-size:12px;line-height:16px;color:var(--text-muted)}
-/* bus marker (component «Bus marker») */
-.o-bus{position:absolute;display:flex;align-items:center;gap:4px;padding:3px 8px 3px 6px;border-radius:999px;background:var(--surface-3);border:1px solid var(--border-marker);overflow:hidden;font:600 13px/16px var(--font);color:var(--text-fg);white-space:nowrap;transition:opacity .3s}
-.o-bus>*{position:relative} .o-bus .ld{position:absolute;left:-1px;top:-1px;bottom:-1px;background:var(--marker-load)}
-.o-bus .plus{font-weight:400;font-size:12px;color:var(--status-delay)} .o-bus.delay>.oi{color:var(--status-delay)}
-.o-bus.crit{background:var(--status-critical);border-color:var(--status-critical);color:var(--action-on-primary);box-shadow:0 0 12px 2px rgba(255,77,61,.55);overflow:visible}
-.o-bus.res{background:var(--surface-2);border-color:var(--status-reserve);color:var(--status-reserve);cursor:pointer}
-.o-bus.res .ld{background:var(--status-reserve-soft)} .o-bus.res.off{cursor:default}
-.o-bus.clk{cursor:pointer}
-.o-head{position:absolute;width:11px;height:11px}
-.o-sel{position:absolute;border:1.5px solid var(--text-fg);border-radius:16px;pointer-events:none}
-.o-eta{position:absolute;height:22px;padding:0 9px;border-radius:8px;background:var(--surface-2);border:1px solid var(--status-reserve);font-size:12px;line-height:20px;white-space:nowrap}
-.o-svg{position:absolute;left:0;top:0;width:1440px;height:900px;overflow:visible;pointer-events:none}
-.o-pulse{transform-box:fill-box;transform-origin:center;animation:opulse 2.4s ease-out infinite}
-@keyframes opulse{from{transform:scale(.5);opacity:.5}to{transform:scale(1.15);opacity:0}}
-@media (prefers-reduced-motion: reduce){ .o-pulse{animation:none} }
-/* ribbon (component «Route ribbon / Route 10») */
-.o-rib{left:392px;top:704px;width:1032px;height:180px}
-.o-rib .p{position:absolute;white-space:nowrap}
-.o-rib .stop{position:absolute;top:114px;width:6px;height:6px;border-radius:50%;background:var(--bg-map);border:1.5px solid var(--text-muted);box-sizing:border-box}
-.o-rib .stop.g{border-color:var(--status-critical)} .o-rib.fixing .stop.g{border-color:var(--status-reserve)}
-.o-rib .stem{position:absolute;top:107px;width:1px;height:8px;background:var(--text-muted)}
-.o-rib .num{position:absolute;top:77px;display:flex;gap:4px;align-items:center;padding:3px 8px 3px 6px;font:600 13px/16px var(--font);white-space:nowrap}
-/* replacement panel */
-.o-rep{left:16px;top:80px;width:360px;height:804px;padding:16px;display:flex;flex-direction:column;gap:12px}
-.o-rep.done{gap:16px}
-.o-hd{display:flex;gap:8px;align-items:flex-start}
-.o-x{border:0;background:none;padding:0;color:var(--text-muted);cursor:pointer;width:16px;height:16px}
-.o-broken{background:var(--status-critical-soft);border:1px solid var(--status-critical);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
-.o-fact{display:flex;gap:8px;align-items:center;font-size:12px;line-height:16px} .o-fact .oi{color:var(--text-muted)}
-.o-fact u{font-weight:600}
-.o-card{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:var(--surface-2);border:1px solid var(--border-subtle);text-align:left;font:inherit;color:inherit;width:100%;cursor:pointer;height:133px}
-.o-card.sel{background:var(--surface-3);border:2px solid var(--text-fg);padding:11px;height:135px}
-.o-card.off{cursor:default}
-.o-card .o-ctop{display:flex;justify-content:space-between;align-items:center}
-.o-card .id{display:flex;gap:8px;align-items:center} .o-card .id .oi{color:var(--status-reserve)}
-.o-card.off .id .oi,.o-card.off .id b,.o-card.off .o-ctop>b{color:var(--text-muted)}
-.o-card b{font-size:14px;line-height:20px;font-weight:600} .o-card .o-ctop>b{font-size:16px;line-height:22px}
-.o-card .bot{display:flex;gap:12px;align-items:center;font-size:12px;line-height:16px}
-.o-av{display:flex;gap:6px;align-items:center;padding:2px 8px;border-radius:6px;background:var(--surface-3)} .o-av i{width:6px;height:6px;border-radius:50%;background:var(--text-fg)}
-.o-card.sel .o-av{background:var(--surface-4)}
-.o-av.no{background:var(--status-delay-soft)} .o-av.no i{background:var(--status-delay)}
-.o-bat{display:flex;gap:4px;align-items:center} .o-bat.low{color:var(--status-delay)}
-.o-sm-badge{display:inline-flex;align-items:center;gap:6px;height:20px;padding:0 10px;border-radius:8px;background:var(--status-reserve-soft);font-size:12px;line-height:16px;font-weight:400}
-.o-sm-badge .oi{color:var(--status-reserve)}
-.o-assigned{background:var(--status-reserve-soft);border:1px solid var(--status-reserve);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:4px}
-.o-assigned .oi{color:var(--status-reserve)}
-.o-steps{display:flex;flex-direction:column;gap:12px}
-.o-step{display:flex;gap:10px;align-items:center;font-size:13px;line-height:20px}
-.o-step .m{width:20px;height:20px;border-radius:10px;display:grid;place-items:center;flex:none;border:1px solid var(--border-strong);box-sizing:border-box}
-.o-step.done .m{background:var(--surface-3);border:0} .o-step.now .m{background:var(--status-reserve-soft);border:1.5px solid var(--status-reserve)}
-.o-step.next{color:var(--text-muted)} .o-step time{margin-left:auto;font-size:12px;line-height:16px;color:var(--text-muted)}
-.o-sp{flex:1}
-
+  --bg:#121417; --s1:#1C1E22; --s2:#23262B; --s3:#2E3137; --s4:#3A3E45; --fg:#E9EAEC; --muted:#A3A3A3;
+  --line:rgba(255,255,255,.14); --line2:rgba(255,255,255,.16); --hover:rgba(255,255,255,.06); --sel:rgba(255,255,255,.10);
+  --delay:#E9AE45; --delay-soft:rgba(233,174,69,.14); --crit:#F2584B; --crit-soft:rgba(242,88,75,.16);
+  --res:#4FB3E0; --res-soft:rgba(79,179,224,.14); --ok:#D4D4D4; --ok-soft:rgba(255,255,255,.10);
+  --acc:#3BB98C; --on-acc:#0B1F18; --acc-soft:rgba(59,185,140,.14); --route:#D4D4D4; --shadow:rgba(0,0,0,.45);
+  --on-status:#171717; --map:url(osm-dark.webp); color-scheme:dark }
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:13px/18px var(--font);font-variant-numeric:tabular-nums;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+#root{position:fixed;inset:0;overflow:hidden}
+#root.narrow{overflow:auto}
+.stage{position:absolute;left:0;top:0;width:1440px;height:900px;transform-origin:0 0;background:var(--bg);overflow:hidden}
+.sizer{position:absolute;left:0;top:0;pointer-events:none}
+.map{position:absolute;left:347px;top:-40px;width:1440px;height:900px;background:var(--map) 0 0/100% 100% no-repeat}
+svg.ov{position:absolute;left:0;top:0;width:1440px;height:900px;overflow:visible;pointer-events:none}
+.pnl{position:absolute;background:var(--s1);border:1px solid var(--line);border-radius:16px;box-shadow:0 2px 12px var(--shadow);overflow:hidden}
+.t11{font-size:11px;line-height:14px}.t12{font-size:12px;line-height:16px}.t13{font-size:13px;line-height:18px}.t14{font-size:14px;line-height:20px}.t15{font-size:15px;line-height:20px}
+.t18{font-size:18px;line-height:24px;font-weight:600}.t22{font-size:22px;line-height:30px;font-weight:600}
+.mut{color:var(--muted)} .b{font-weight:600} .m{font-weight:500}
+.caps{font-size:12px;line-height:16px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.01em}
+svg.i{flex:none;display:block}
+/* rail */
+.rail{left:8px;top:8px;width:56px;height:884px;display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:8px}
+.logo{width:40px;height:40px;border-radius:10px;background:var(--acc);color:var(--on-acc);display:grid;place-items:center;margin-bottom:8px}
+.ri{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;color:var(--muted);position:relative}
+.ri.on{background:var(--acc-soft);color:var(--acc)}
+.ri:hover{background:var(--hover)}
+.badge{position:absolute;right:6px;top:4px;min-width:16px;height:16px;border-radius:8px;background:var(--crit);color:#fff;font-size:10px;line-height:16px;font-weight:600;text-align:center;padding:0 4px}
+.rail .sp{flex:1}
+/* routes */
+.routes{left:72px;top:8px;width:336px;height:884px;display:flex;flex-direction:column}
+.rhead{padding:20px 20px 12px;display:flex;flex-direction:column;gap:12px}
+.rtitle{display:flex;align-items:baseline;justify-content:space-between}
+.rtitle h1{margin:0;font-size:20px;line-height:28px;font-weight:600}
+.blk{border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.blk .h{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;line-height:20px}
+.blk .h .r{margin-left:auto}
+.blk.kpi{background:var(--acc-soft);flex-direction:row;align-items:center;justify-content:space-between;padding:14px 16px}
+.blk.kpi .v{font-size:24px;line-height:30px;font-weight:600;color:var(--acc)}
+.blk.crit{background:var(--crit-soft)} .blk.crit .h{color:var(--crit)}
+.blk.res{background:var(--res-soft)} .blk.res .h{color:var(--res)}
+.blk.ok{background:var(--ok-soft)} .blk.ok .h{color:var(--ok)}
+.srch{display:flex;gap:8px}
+.inp{flex:1;height:44px;border:1px solid var(--line2);border-radius:10px;display:flex;align-items:center;gap:8px;padding:0 12px;color:var(--muted);font-size:15px}
+.ib{width:44px;height:44px;border:1px solid var(--line2);border-radius:10px;display:grid;place-items:center;color:var(--fg)}
+.tabs{display:flex;gap:16px;border-bottom:1px solid var(--line);padding:0 20px}
+.tab{padding:6px 0 8px;color:var(--muted);font-size:15px;line-height:20px;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab.on{color:var(--fg);font-weight:500;border-color:var(--fg)}
+.thead{display:flex;justify-content:space-between;padding:14px 20px 8px}
+.rrow{display:flex;align-items:center;gap:12px;padding:9px 20px;position:relative;cursor:default}
+.rrow.on{background:var(--sel)} .rrow.on::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc)}
+.num{flex:none;width:30px;height:30px;border-radius:8px;background:var(--s3);display:grid;place-items:center;font-weight:600;font-size:14px}
+.rrow.on .num{background:var(--acc);color:var(--on-acc)}
+.rtx{flex:1;min-width:0}
+.rtx div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rtx .s{font-size:13px;line-height:18px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{flex:none;width:6px;height:6px;border-radius:50%;background:var(--delay)}
+.cnt{flex:none;width:30px;height:30px;border-radius:8px;background:var(--s3);display:grid;place-items:center;font-size:14px;font-weight:500}
+/* trips */
+.trips{left:416px;top:8px;width:516px;height:884px;display:flex;flex-direction:column}
+.thd{padding:20px 20px 0}
+.thd .t13{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.thd h2{margin:0;font-size:24px;line-height:30px;font-weight:600}
+.rib{padding:16px 20px 8px}
+.ribh{display:flex;justify-content:space-between;align-items:baseline}
+.ribb{position:relative;height:66px;margin-top:6px}
+.chipn{position:absolute;top:0;height:22px;padding:2px 7px;border-radius:6px;font-size:12px;line-height:16px;font-weight:600;white-space:nowrap;border:1px solid var(--line2);background:var(--s1)}
+.chipn.delay{background:var(--delay);color:var(--on-status);border-color:transparent;padding:2px 6px}
+.chipn.crit{background:var(--crit);color:#fff;border-color:transparent;padding:2px 6px}
+.chipn.res{background:var(--res);color:#fff;border-color:transparent;top:46px}
+.gapl{position:absolute;top:48px;font-size:12px;line-height:16px;font-weight:600;transform:translateX(-50%);white-space:nowrap}
+.sumrow{display:flex;gap:10px;margin-top:10px}
+.sumc{flex:1;background:var(--s2);border-radius:10px;padding:10px 12px}
+.sumc .v{font-size:22px;line-height:28px;font-weight:600}
+.ttabs{margin-top:8px}
+.tbl{flex:1;overflow:hidden}
+.trh{display:grid;grid-template-columns:104px 60px 168px 52px 64px;gap:8px;padding:14px 20px 8px;align-items:center}
+.trh span:last-child,.tr .dev{text-align:right}
+.tr{display:grid;grid-template-columns:104px 60px 168px 52px 64px;gap:8px;padding:7px 20px;align-items:center;position:relative;font-size:15px;line-height:20px}
+.tr.on{background:var(--sel)} .tr.on::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc)}
+.tr.crit{background:var(--crit-soft)} .tr.crit::before{background:var(--crit)}
+.tr.resv{background:var(--res-soft)} .tr.resv::before{background:var(--res)}
+.plate{display:inline-flex;height:32px;align-items:center;padding:0 10px;border:1px solid var(--line2);border-radius:8px;font-weight:500;white-space:nowrap;background:var(--s1)}
+.tr.crit .plate{border-color:var(--crit);color:var(--crit)}
+.bar{position:relative;height:24px}
+.bar .tk{position:absolute;left:0;right:0;top:10px;height:4px;border-radius:2px;background:var(--s3)}
+.bar .fl{position:absolute;left:0;top:10px;height:4px;border-radius:2px;background:var(--muted)}
+.bar .ch{position:absolute;top:2px;height:20px;padding:1px 7px;border-radius:10px;font-size:12px;line-height:16px;font-weight:500;border:1px solid var(--line2);background:var(--s1);white-space:nowrap}
+.bar.delay .fl{background:var(--delay)} .bar.delay .ch{background:var(--delay);color:var(--on-status);border-color:transparent;font-weight:600}
+.bar.crit .ch{background:var(--crit);color:#fff;border-color:transparent;font-weight:600}
+.dev.delay{color:var(--delay);font-weight:600} .dev.crit{color:var(--crit);font-weight:600} .dev.res{color:var(--res);font-weight:600}
+.log{display:flex;gap:14px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.log time{flex:none;width:44px;color:var(--muted);font-weight:500;font-size:14px;line-height:20px}
+.log .d{flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px}
+.log b{display:block;font-weight:500;font-size:14px;line-height:20px}
+.empty{padding:24px 20px;color:var(--muted)}
+/* map chrome */
+.mode{position:absolute;left:948px;top:16px;display:flex;gap:2px;padding:3px;border-radius:10px;background:var(--s1);border:1px solid var(--line);box-shadow:0 2px 8px var(--shadow)}
+.mode a{padding:5px 10px;border-radius:7px;font-weight:500;color:var(--muted)}
+.mode a.on{background:var(--s3);color:var(--fg);font-weight:600}
+.mode a:not(.on):hover{color:var(--fg)}
+.zoom{position:absolute;left:1380px;top:16px;width:44px;border-radius:10px;background:var(--s1);border:1px solid var(--line);box-shadow:0 2px 8px var(--shadow)}
+.zoom div{height:44px;display:grid;place-items:center;font-size:20px}
+.lay{position:absolute;left:1380px;top:120px;width:44px;height:44px;border-radius:10px;background:var(--s1);border:1px solid var(--line);display:grid;place-items:center;box-shadow:0 2px 8px var(--shadow)}
+.attr{position:absolute;right:16px;top:172px;font-size:10px;line-height:12px;color:var(--muted);opacity:.85}
+.demo{position:absolute;left:948px;top:60px;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 12px;border-radius:10px;background:var(--s1);border:1px solid var(--line);box-shadow:0 2px 8px var(--shadow);max-width:470px}
+.demo .st{color:var(--muted);font-size:12px;line-height:16px;white-space:nowrap}
+.demo button{padding:5px 10px;border-radius:7px;background:var(--fg);color:var(--bg);font-weight:600;font-size:12px;line-height:16px;white-space:nowrap}
+/* markers */
+.mk{position:absolute;display:flex;align-items:center;gap:4px;height:24px;padding:0 8px 0 6px;border-radius:12px;background:var(--s1);border:1px solid var(--line2);font-weight:600;font-size:13px;white-space:nowrap;box-shadow:0 1px 3px var(--shadow);transition:left .6s,top .6s}
+.mk .x{color:var(--delay);font-weight:500}
+.mk.delay .i{color:var(--delay)}
+.mk.res{border:1.5px solid var(--res);color:var(--res)}
+.mk.res.sel{box-shadow:0 0 0 2px var(--s1),0 0 0 3.5px var(--res)}
+.mk.dim{opacity:.55}
+.pin{position:absolute;display:flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:12px;background:var(--crit);color:#fff;font-weight:600;font-size:13px;transform:translate(-50%,-100%);box-shadow:0 2px 8px rgba(200,38,26,.35)}
+.depot{position:absolute;padding:6px 10px;border-radius:8px;background:var(--s1);border:1px solid var(--line);font-size:12px;line-height:16px}
+.slab{position:absolute;font-size:11px;line-height:14px;font-weight:500;color:var(--muted);white-space:nowrap}
+.eta{position:absolute;height:22px;padding:2px 8px;border-radius:11px;border:1px solid var(--res);background:var(--s1);color:var(--res);font-size:12px;line-height:16px;font-weight:500;white-space:nowrap}
+@keyframes pulse{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+.ring{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:2px solid var(--crit);animation:pulse 2.2s ease-out infinite}
+.ring.b{animation-delay:1.1s}
+.ack{position:absolute;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:1.5px solid var(--crit);opacity:.6;background:radial-gradient(var(--crit-soft),transparent 70%)}
+/* vehicle card */
+.card{left:943px;width:481px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.chd{display:flex;align-items:center;gap:8px}
+.chd .t{font-size:20px;line-height:26px;font-weight:600}
+.chd .r{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:15px;font-weight:500}
+.pill{display:inline-flex;align-items:center;height:30px;padding:0 10px;border:1px solid var(--line2);border-radius:8px;font-size:15px;font-weight:500}
+.bn{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;font-size:15px;line-height:20px}
+.bn .r{margin-left:auto}
+.bn.crit{background:var(--crit-soft)} .bn.crit .i,.bn.crit .r{color:var(--crit)}
+.bn.res{background:var(--res-soft)} .bn.res .i,.bn.res .r{color:var(--res)}
+.prog{display:flex;align-items:center;gap:8px;font-size:15px}
+.prog .ln{flex:1;position:relative;height:16px}
+.prog .ln i{position:absolute;top:7px;height:2px;left:0;right:0;background:var(--s4)}
+.prog .ln i.f{background:var(--route);right:auto}
+.prog .ln b{position:absolute;top:3px;width:10px;height:10px;border-radius:50%;border:2px solid var(--route);background:var(--s1);margin-left:-5px}
+.prog .ln b.n{border-color:var(--s4)}
+.prog .ln em{position:absolute;top:-2px;transform:translateX(-50%);height:20px;padding:1px 7px;border-radius:10px;font-style:normal;font-size:12px;line-height:18px;font-weight:600;white-space:nowrap}
+.prog .ln em.delay{background:var(--delay);color:var(--on-status)} .prog .ln em.crit{background:var(--crit);color:#fff}
+.ends{display:flex;justify-content:space-between;margin-top:-8px;color:var(--muted);font-size:13px}
+.sug{display:flex;gap:10px;padding:12px 14px;border-radius:10px;background:var(--s2);font-size:13px;line-height:18px}
+.sug .i{color:var(--acc);margin-top:1px}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;font-size:13px;font-weight:500;white-space:nowrap}
+.btn.p{background:var(--acc);color:var(--on-acc)}
+.btn.p:hover{filter:brightness(1.06)}
+.btn.s{background:var(--s3)} .btn.s:hover{background:var(--s4)}
+.btn.g{color:var(--muted)} .btn.g:hover{color:var(--fg)}
+.btn.lg{height:44px;font-size:15px;justify-content:center;width:100%}
+.rsh{display:flex;align-items:center;justify-content:space-between}
+.arr{display:flex;gap:6px} .arr span{width:32px;height:32px;border:1px solid var(--line2);border-radius:8px;display:grid;place-items:center;color:var(--muted)}
+.rcs{display:flex;gap:10px;overflow:hidden;margin-right:-20px;padding-right:20px}
+.rc{flex:none;width:186px;border:1px solid var(--line2);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;text-align:left}
+.rc.on{border:2px solid var(--acc);padding:11px 13px;background:var(--acc-soft)}
+.rc.off{opacity:.55;cursor:not-allowed}
+.rc .h{display:flex;align-items:center;justify-content:space-between;font-size:17px;line-height:22px;font-weight:600}
+.tag{font-size:12px;line-height:16px;font-weight:500;padding:2px 8px;border-radius:6px;background:var(--res-soft);color:var(--res)}
+.tag.no{background:var(--s3);color:var(--muted)}
+.why{display:flex;gap:8px;font-size:13px;line-height:18px;color:var(--muted)} .why .i{color:var(--acc);margin-top:1px}
+.ride{border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ride .h{display:flex;justify-content:space-between;font-size:15px;font-weight:600} .ride .h span{color:var(--res);font-weight:500}
+.pb{height:6px;border-radius:3px;background:var(--s3);overflow:hidden} .pb i{display:block;height:100%;background:var(--res);border-radius:3px;transition:width 1s}
+.ds{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.ds .dot.ok{background:var(--acc)}
+.tl{position:relative;height:10px;margin-top:4px} .tl .tk{position:absolute;left:0;right:0;top:3px;height:4px;border-radius:2px;background:var(--s3)}
+.tl i{position:absolute;top:0;width:10px;height:10px;border-radius:50%;margin-left:-5px}.tl i.tk{width:auto;height:4px;top:3px;margin:0;border-radius:2px}
+/* phone */
+.veil{position:absolute;inset:0;background:rgba(0,0,0,.35);display:grid;place-items:center;backdrop-filter:blur(2px)}
+.phone{width:390px;height:844px;transform:scale(.92);border-radius:48px;background:var(--s1);border:1px solid var(--line2);box-shadow:0 20px 60px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden}
+.phone .sb{display:flex;justify-content:space-between;padding:18px 32px 10px;font-weight:600;font-size:15px}
+.phone .ct{flex:1;display:flex;flex-direction:column;gap:16px;padding:8px 24px 12px}
+.na{background:var(--res-soft);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:6px}
+.na .k{font-size:12px;line-height:16px;font-weight:600;color:var(--res)}
+.na .t{font-size:24px;line-height:30px;font-weight:600}
+.na .d{font-size:15px;line-height:21px}
+.mini{height:190px;border-radius:16px;background:var(--s3);position:relative;overflow:hidden}
+.kv{display:flex;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line);font-size:15px}
+.kv span:last-child{font-weight:500}
+.hb{display:flex;justify-content:center;padding:6px 0 10px} .hb i{width:134px;height:5px;border-radius:3px;background:var(--fg)}
+.toast{position:absolute;left:948px;top:104px;padding:10px 14px;border-radius:10px;background:var(--fg);color:var(--bg);font-weight:500;box-shadow:0 6px 20px var(--shadow);opacity:0;transform:translateY(-6px);transition:.25s;pointer-events:none;max-width:420px}
+.toast.on{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){.ring{animation:none;opacity:.4}.mk,.pb i{transition:none}}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 </style>
 </head>
 <body>
-
-
-<canvas id="stage" aria-label="3D-карта района: маршрут №10, авария борта 4412 и резервы"></canvas>
-<div id="labels" aria-hidden="true"></div>
-<div id="ops" aria-label="Рабочий экран диспетчера"></div>
-<button class="o-back" id="opsBack">3D · обзор</button>
-
-<header class="panel top">
-  <div><h1>Диспетчерская · Северный район</h1><p id="sub">3D-обзор · маршрут №10</p></div>
-  <div class="chips">
-    <span class="chip"><i></i>38 на линии</span>
-    <span class="chip"><i style="background:var(--delay)"></i>4 опаздывают</span>
-    <span class="chip crit" id="chipCrit"><i></i><span>1 авария</span></span>
-    <span class="chip res"><i></i><span id="chipRes">3 в резерве</span></span>
-  </div>
-  <div class="tr">
-    <div class="seg" role="group" aria-label="Режим карты"><button data-m="2d" aria-pressed="false">2D · работа</button><button data-m="3d" aria-pressed="true">3D · обзор</button></div>
-    <button class="ib" id="theme" aria-label="Переключить тему"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-    <span class="clock" id="clock">14:32</span>
-  </div>
-</header>
-
-<section class="panel card" aria-live="polite">
-  <div class="alert" id="alert">
-    <div class="tile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 22 20H2Z"/><path d="M12 10v4M12 17v.5"/></svg></div>
-    <div><b id="alertTitle">Поломка · Маршрут №10</b><span id="alertMeta">Борт 4412 у «Пл. Мира» · разрыв 14 мин, 2 остановки</span></div>
-  </div>
-  <div class="resv" id="res">
-    <div class="res-h"><b>Резерв</b><span>свободные — по времени прибытия</span></div>
-    <button class="rrow sel" data-n="4417" aria-pressed="true"><b>4417</b><em>Быстрее всех</em><time>6 мин</time><small>Депо «Северное» · 2,4 км · электробус · 82%</small></button>
-    <button class="rrow" data-n="4380" aria-pressed="false"><b>4380</b><em></em><time>11 мин</time><small>Конечная «Парковая» · 4,9 км · дизель</small></button>
-    <button class="rrow off" data-n="4502" aria-disabled="true"><b>4502</b><em></em><time>Недоступен</time><small>Депо «Северное» · <i>заряд 18% — не хватит на 2 круга</i></small></button>
-  </div>
-  <ol class="steps" id="steps" hidden>
-    <li class="done" data-s="0">Назначено диспетчером<time id="t0">14:32</time></li>
-    <li data-s="1">Водитель подтвердил<time id="t1">—</time></li>
-    <li data-s="2">В пути к «Пл. Мира»<time id="t2">—</time></li>
-    <li data-s="3">Встал в график №10<time id="t3">—</time></li>
-  </ol>
-  <div class="row">
-    <button class="primary" id="assign">Назначить 4417 на маршрут №10</button>
-    <button id="focus">К аварии</button>
-  </div>
-</section>
-
-<div class="panel hint">
-  <span id="hintText">Колесо или щипок — приближение · перетаскивание — поворот</span>
-  <button id="overview">Обзор района</button>
-</div>
-
-<script src="three.min.js"></script>
+<div id="root"><div class="stage" id="stage"></div><div class="sizer" id="sizer"></div></div>
 <script>
-(() => {
-const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const W = x => (x - 720) / 10, Z = y => (y - 450) / 10;
-
-// ---------- renderer / camera ----------
-const canvas = document.getElementById('stage');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setClearColor(0x000000, 0);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xffffff, 150, 400);
-const camera = new THREE.PerspectiveCamera(35, 1, 1, 2000);
-const cam = { az: Math.PI / 4, pol: 0.95, dist: 175, target: new THREE.Vector3(0, 0, 4) };
-function placeCamera() {
-  const t = cam.target, s = Math.sin(cam.pol);
-  camera.position.set(t.x + cam.dist * s * Math.sin(cam.az), t.y + cam.dist * Math.cos(cam.pol), t.z + cam.dist * s * Math.cos(cam.az));
-  camera.lookAt(t);
-}
-
-// ---------- lights ----------
-const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.7); scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xffffff, 0.9);
-sun.position.set(-70, 120, 50); sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -90, right: 90, top: 70, bottom: -70, near: 10, far: 300 });
-sun.shadow.bias = -0.0008; scene.add(sun);
-
-// ---------- materials (re-coloured on theme change) ----------
-// Buildings and ground are flat-shaded by hand, like the Figma isometry: one tone per face direction.
-// Light and shade come from the face colours; real shadows are laid on by a separate shadow-catcher plane.
-const M = {
-  ground: new THREE.MeshBasicMaterial(),
-  slabL: new THREE.MeshBasicMaterial(), slabR: new THREE.MeshBasicMaterial(),
-  top: new THREE.MeshBasicMaterial(), sideL: new THREE.MeshBasicMaterial(), sideR: new THREE.MeshBasicMaterial(),
-  edge: new THREE.LineBasicMaterial({ transparent: true, opacity: .35 }),
-  catcher: new THREE.ShadowMaterial({ opacity: .14 }),
-  street: new THREE.LineBasicMaterial({ transparent: true, opacity: .9 }),
-  avenue: new THREE.MeshBasicMaterial(),
-  water: new THREE.MeshBasicMaterial(),
-  park: new THREE.MeshBasicMaterial(),
-  tree: new THREE.MeshLambertMaterial(),
-  route: new THREE.MeshBasicMaterial(),
-  glow: new THREE.MeshBasicMaterial({ transparent: true, opacity: .25, depthWrite: false }),
-  gap: new THREE.MeshBasicMaterial(),
-  gapGlow: new THREE.MeshBasicMaterial({ transparent: true, opacity: .2, depthWrite: false }),
-  ring: new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false }),
-  path: new THREE.MeshBasicMaterial({ transparent: true, opacity: .9 }),
-  busN: new THREE.MeshLambertMaterial(), busC: new THREE.MeshLambertMaterial(),
-  busR: new THREE.MeshLambertMaterial(), busD: new THREE.MeshLambertMaterial(),
-  busBody: new THREE.MeshLambertMaterial(), glass: new THREE.MeshStandardMaterial({ roughness: .15, metalness: .4 }),
-  wheel: new THREE.MeshLambertMaterial({ color: 0x18191b }), batt: new THREE.MeshLambertMaterial(),
-  head: new THREE.MeshBasicMaterial({ color: 0xfff4d6 }), tail: new THREE.MeshBasicMaterial({ color: 0xe0322a }),
-  dest: new THREE.MeshBasicMaterial({ color: 0xffb547 }), hazard: new THREE.MeshBasicMaterial({ color: 0xffa21f }),
-  warn: new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }),
-  car: new THREE.MeshLambertMaterial(), carGlass: new THREE.MeshLambertMaterial(), lane: new THREE.MeshBasicMaterial(),
-  shelter: new THREE.MeshLambertMaterial(),
-  padTop: new THREE.MeshBasicMaterial(), padSide: new THREE.MeshBasicMaterial(),
-  roofL: new THREE.MeshBasicMaterial(), roofR: new THREE.MeshBasicMaterial(),
-  trunk: new THREE.MeshLambertMaterial(),
-  roofTile: new THREE.MeshLambertMaterial(), dome: new THREE.MeshLambertMaterial(), lmWall: new THREE.MeshLambertMaterial(),
-  lamp: new THREE.MeshBasicMaterial(), lampGlow: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
-  ballast: new THREE.MeshBasicMaterial(), rail: new THREE.MeshBasicMaterial(),
-  depotRoof: new THREE.MeshBasicMaterial(),
-};
-// BoxGeometry face order: +x, -x, +y, -y, +z, -z. The camera starts on the +x/+z side,
-// so +z reads as the lit "left" face and +x as the shaded "right" face, as in Figma.
-const BOX_MATS = () => [M.sideR, M.sideL, M.top, M.top, M.sideL, M.sideR];
-// Facade windows are drawn in the shader from world position, so every building gets floors at the same
-// real-world pitch regardless of its height. In the dark theme a share of windows is lit — the city at night.
-const WIN = { mul: { value: .86 }, lit: { value: new THREE.Color(0xffd49a) }, litAmt: { value: 0 } };
-for (const mat of [M.sideL, M.sideR]) mat.onBeforeCompile = sh => {
-  Object.assign(sh.uniforms, { uWinMul: WIN.mul, uLit: WIN.lit, uLitAmt: WIN.litAmt });
-  sh.vertexShader = 'varying vec3 vWP; varying float vAx; varying float vTop;\n' + sh.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
-    vec4 wp = vec4(transformed, 1.0); vec4 tp = vec4(0.0, 0.5, 0.0, 1.0);
-    #ifdef USE_INSTANCING
-      wp = instanceMatrix * wp; tp = instanceMatrix * tp;
-    #endif
-    vWP = (modelMatrix * wp).xyz; vTop = (modelMatrix * tp).y; vAx = abs(normal.x) > 0.5 ? 1.0 : 0.0;`);
-  sh.fragmentShader = 'uniform float uWinMul; uniform vec3 uLit; uniform float uLitAmt; varying vec3 vWP; varying float vAx; varying float vTop;\n' + sh.fragmentShader.replace('#include <fog_fragment>', `
-    float hc = mix(vWP.x, vWP.z, vAx);
-    vec2 cell = vec2(hc / 0.62, (vWP.y - 0.15) / 0.55); vec2 f = fract(cell);
-    float win = step(0.22, f.x) * step(f.x, 0.78) * step(0.32, f.y) * step(f.y, 0.8) * step(0.25, vWP.y) * step(vWP.y, vTop - 0.22);
-    float r = fract(sin(dot(floor(cell) + vec2(vAx * 31.7, 0.0), vec2(12.9898, 78.233))) * 43758.5453);
-    gl_FragColor.rgb *= mix(1.0, uWinMul, win);
-    gl_FragColor.rgb = mix(gl_FragColor.rgb, uLit, win * step(1.0 - uLitAmt, r));
-    #include <fog_fragment>`);
-};
-const ROOF_MATS = () => [M.roofR, M.roofL, M.top, M.top, M.roofL, M.roofR];
-function applyTheme() {
-  const c = n => new THREE.Color(css(n));
-  M.ground.color = c('--ground'); M.slabL.color = c('--slab-l'); M.slabR.color = c('--slab-r');
-  M.top.color = c('--bldg'); M.sideL.color = c('--bldg-l'); M.sideR.color = c('--bldg-r'); M.edge.color = c('--edge');
-  M.street.color = c('--street'); M.avenue.color = c('--avenue'); M.water.color = c('--water');
-  M.park.color = c('--park'); M.tree.color.set(0xffffff);
-  M.route.color = c('--route'); M.glow.color = c('--route');
-  M.gap.color = c('--crit'); M.gapGlow.color = c('--crit'); M.ring.color = c('--crit');
-  if (typeof rings !== 'undefined') rings.forEach(r => r.material.color = c('--crit'));
-  M.path.color = c('--res'); M.busN.color = c('--bus-roof'); M.busC.color = c('--crit');
-  M.busBody.color = c('--bus-body'); M.glass.color = c('--glass'); M.batt.color = c('--batt'); M.warn.color = c('--crit');
-  M.carGlass.color = c('--glass');
-  M.padTop.color = c('--pad'); M.padSide.color = c('--pad-side'); M.roofL.color = c('--bldg-l'); M.roofR.color = c('--bldg-r');
-  M.trunk.color = c('--pad-side'); scene.fog.color = c('--bg');
-  M.roofTile.color = c('--roof-tile'); M.dome.color = c('--dome'); M.lmWall.color = c('--bldg'); M.lamp.color = c('--lamp'); M.lampGlow.color = c('--lamp');
-  M.ballast.color = c('--ballast'); M.rail.color = c('--edge'); M.lane.color = c('--lane'); M.shelter.color = c('--bus-body');
-  M.busR.color = c('--res'); M.busD.color = c('--delay'); M.depotRoof.color = c('--res');
-  const dark = c('--bg').getHSL({}).l < .3;
-  hemi.intensity = dark ? .75 : .85; sun.intensity = dark ? .7 : .55; hemi.groundColor.set(dark ? 0x202226 : 0x8a8f96);
-  if (typeof recolorCars === 'function') recolorCars(dark);
-  M.glow.opacity = dark ? .25 : .10;
-  M.catcher.opacity = dark ? .45 : .16;
-  M.edge.opacity = dark ? .5 : .28;
-  WIN.mul.value = dark ? .62 : .84; WIN.litAmt.value = dark ? .16 : 0; M.lampGlow.opacity = dark ? .16 : 0;
-  if (typeof recolorCity === 'function') recolorCity(dark);
-  if (typeof recolorTrees === 'function') recolorTrees(dark);
-}
-
-// ---------- helpers ----------
-let seed;
-const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-function ribbon(pts, w, y, mat) {
-  const pos = [], idx = [];
-  for (let i = 0; i < pts.length; i++) {
-    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
-    let tx = b[0] - a[0], tz = b[1] - a[1]; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l;
-    const nx = -tz * w / 2, nz = tx * w / 2, [x, z] = pts[i];
-    pos.push(x + nx, y, z + nz, x - nx, y, z - nz);
-    if (i) { const k = i * 2; idx.push(k - 2, k, k - 1, k - 1, k, k + 1); }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-  const m = new THREE.Mesh(g, mat); scene.add(m); return m;
-}
-const toW = p => [W(p[0]), Z(p[1])];
-
-// ---------- ground ----------
-const slab = new THREE.Mesh(new THREE.BoxGeometry(144, 3, 90), [M.slabR, M.slabL, M.ground, M.slabR, M.slabL, M.slabR]); slab.position.y = -1.5; scene.add(slab);
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(144, 90), M.ground);
-ground.rotation.x = -Math.PI / 2; ground.position.y = 0.001; scene.add(ground);
-// shadow catcher sits above streets, water and parks, so building shadows fall across all of them
-const catcher = new THREE.Mesh(new THREE.PlaneGeometry(144, 90), M.catcher);
-catcher.rotation.x = -Math.PI / 2; catcher.position.y = .075; catcher.receiveShadow = true; scene.add(catcher);
-
-// streets
-// streets: real asphalt strips (they sit just above the river, so every crossing reads as a bridge)
-function strips(list, y, mat) {
-  const pos = [], idx = [];
-  for (const [x0, z0, x1, z1] of list) { const k = pos.length / 3; pos.push(x0, y, z0, x1, y, z0, x1, y, z1, x0, y, z1); idx.push(k, k + 2, k + 1, k, k + 3, k + 2); }
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-  const m = new THREE.Mesh(g, mat); scene.add(m); return m;
-}
-const SW = .65, XL = [], ZL = [];
-for (let x = 72; x < 1440; x += 72) XL.push(W(x));
-for (let y = 72; y < 900; y += 72) ZL.push(Z(y));
-strips([...XL.map(x => [x - SW, -45, x + SW, 45]), ...ZL.map(z => [-72, z - SW, 72, z + SW])], .045, M.street);
-// lane dashes
-const dl = [];
-const nearX = (v, list) => list.some(c => Math.abs(c - v) < 1.6);
-for (const x of XL) for (let z = -44; z < 44; z += 1.6) if (!nearX(z + .35, ZL)) dl.push([x - .03, z, x + .03, z + .7]);
-for (const z of ZL) for (let x = -71; x < 71; x += 1.6) if (!nearX(x + .35, XL)) dl.push([x, z - .03, x + .7, z + .03]);
-// zebra crossings on every approach of every junction
-for (const x of XL) for (const z of ZL) for (let k = -2; k <= 2; k++) {
-  const o = k * .25;
-  dl.push([x + o - .08, z - 1.3, x + o + .08, z - .85], [x + o - .08, z + .85, x + o + .08, z + 1.3]);
-  dl.push([x - 1.3, z + o - .08, x - .85, z + o + .08], [x + .85, z + o - .08, x + 1.3, z + o + .08]);
-}
-strips(dl, .047, M.lane);
-ribbon([[0, 470], [1440, 380]].map(toW), 2.2, .048, M.avenue);
-ribbon([[540, 0], [600, 900]].map(toW), 2.2, .048, M.avenue);
-
-// river (sampled bezier, same curve as the Figma map)
-const bez = (p0, p1, p2, p3, t) => { const u = 1 - t; return [u*u*u*p0[0] + 3*u*u*t*p1[0] + 3*u*t*t*p2[0] + t*t*t*p3[0], u*u*u*p0[1] + 3*u*u*t*p1[1] + 3*u*t*t*p2[1] + t*t*t*p3[1]]; };
-const R = [];
-for (const s of [[[0,207],[160,260],[300,140],[560,120]],[[560,120],[760,105],[760,255],[960,205]],[[960,205],[1140,160],[1260,115],[1440,165]]]) for (let t = 0; t <= 1.0001; t += .04) R.push(bez(...s, t));
-ribbon(R.map(toW), 3.6, .036, M.padTop);
-ribbon(R.map(toW), 2.6, .04, M.water);
-
-// parks
-seed = 7;
-const parks = [[190,560,150,120],[1235,420,70,42],[905,60,95,40],[1290,690,90,55],[640,760,90,50]];
-const TREES = [];
-for (const [cx, cy, rx, ry] of parks) {
-  const pts = []; for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, k = 1 + (rnd() - .5) * .36; pts.push(new THREE.Vector2(W(cx + Math.cos(a) * rx * k), -Z(cy + Math.sin(a) * ry * k))); }
-  const shape = new THREE.Shape(); shape.moveTo(pts[0].x, pts[0].y); shape.splineThru([...pts.slice(1), pts[0]]);
-  const m = new THREE.Mesh(new THREE.ShapeGeometry(shape, 24), M.park); m.rotation.x = -Math.PI / 2; m.position.y = .05; scene.add(m);
-  const n = Math.round(rx * ry / 500);
-  for (let i = 0; i < n; i++) { const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * .72;
-    TREES.push({ x: W(cx + Math.cos(a) * rx * r), z: Z(cy + Math.sin(a) * ry * r), s: .7 + rnd() * .7, round: rnd() < .55, tone: rnd() }); }
-}
-
-// ---------- route 10 ----------
-const P = [[430,640],[560,600],[700,612],[820,520],[900,432],[1040,384],[1150,302],[1280,252],[1400,132]];
-const seg = []; let L = 0; for (let i = 1; i < P.length; i++) { const l = Math.hypot(P[i][0]-P[i-1][0], P[i][1]-P[i-1][1]); seg.push(l); L += l; }
-function at(t) { let d = Math.max(0, Math.min(1, t)) * L; for (let i = 0; i < seg.length; i++) { if (d <= seg[i]) { const k = d / seg[i]; return { x: P[i][0] + (P[i+1][0]-P[i][0]) * k, y: P[i][1] + (P[i+1][1]-P[i][1]) * k, i, a: Math.atan2(P[i+1][1]-P[i][1], P[i+1][0]-P[i][0]) }; } d -= seg[i]; } const n = P.length - 1; return { x: P[n][0], y: P[n][1], i: n - 1, a: Math.atan2(P[n][1]-P[n-1][1], P[n][0]-P[n-1][0]) }; }
-function sub(t0, t1) { const a = at(t0), b = at(t1), pts = [[a.x, a.y]]; for (let i = a.i + 1; i <= b.i; i++) pts.push(P[i]); pts.push([b.x, b.y]); return pts.map(toW); }
-ribbon(P.map(toW), 1.3, .06, M.glow);
-ribbon(P.map(toW), .4, .08, M.route);
-const GAP = [0.45, 0.62];
-const gapGlow = ribbon(sub(...GAP), 1.5, .09, M.gapGlow);
-const gapLine = ribbon(sub(...GAP), .5, .1, M.gap);
-// stop pavilions on the kerb, right of travel (right-hand traffic)
-const shRoof = new THREE.BoxGeometry(1, .06, .42), shBack = new THREE.BoxGeometry(1, .46, .03), shPost = new THREE.BoxGeometry(.04, .62, .04), shPad = new THREE.BoxGeometry(1.5, .04, .7);
-for (let i = 0; i <= 10; i++) {
-  const p = at(Math.min(.999, i / 10)), g = new THREE.Group();
-  const pad = new THREE.Mesh(shPad, M.lane); pad.position.y = .02;
-  const roof = new THREE.Mesh(shRoof, M.shelter); roof.position.y = .64; roof.castShadow = true;
-  const back = new THREE.Mesh(shBack, M.glass); back.position.set(0, .36, .18);
-  const p1 = new THREE.Mesh(shPost, M.batt); p1.position.set(-.46, .31, .18); const p2 = p1.clone(); p2.position.x = .46;
-  g.add(pad, roof, back, p1, p2);
-  g.position.set(W(p.x) - Math.sin(p.a) * 1.3, .06, Z(p.y) + Math.cos(p.a) * 1.3); g.rotation.y = -p.a; scene.add(g);
-}
-
-const tq = new THREE.Quaternion(), up3 = new THREE.Vector3(0, 1, 0), one = new THREE.Vector3(1, 1, 1), zero = new THREE.Vector3(0, 0, 0);
-const box = (x, y, z, px, py, pz) => { const g = new THREE.BoxGeometry(x, y, z); g.translate(px, py, pz); return g; };
-// ---------- buildings (same generator as the Figma isometry: low along the route, downtown to the north-west) ----------
-seed = 11;
-const dSeg = (px, py, ax, ay, bx, by) => { const dx = bx - ax, dy = by - ay; const t = Math.max(0, Math.min(1, ((px-ax)*dx + (py-ay)*dy) / (dx*dx + dy*dy))); return Math.hypot(px - ax - t*dx, py - ay - t*dy); };
-const dPoly = (x, y, pts) => { let m = 1e9; for (let i = 1; i < pts.length; i++) m = Math.min(m, dSeg(x, y, ...pts[i-1], ...pts[i])); return m; };
-const inPark = (x, y) => parks.some(([cx, cy, rx, ry]) => ((x-cx)/(rx+20))**2 + ((y-cy)/(ry+20))**2 < 1);
-const avenues = [[[0,470],[1440,380]], [[540,0],[600,900]]];
-const blds = [], PADS = [], LAWNS = [], ROOFS = [], LOTS = []; const G = 72;
-// railway along the south of the district
-const chaikin = (pl, n) => { for (let k = 0; k < n; k++) { const o = [pl[0]]; for (let i = 0; i < pl.length - 1; i++) { const a = pl[i], b = pl[i+1]; o.push([a[0]*.75 + b[0]*.25, a[1]*.75 + b[1]*.25], [a[0]*.25 + b[0]*.75, a[1]*.25 + b[1]*.75]); } o.push(pl[pl.length-1]); pl = o; } return pl; };
-const RAIL = chaikin([[-20, 746], [300, 730], [700, 716], [1100, 712], [1460, 690]], 3);
-// landmarks next to the stops: what a driver names on the radio ("I'm by the monument")
-function stopSide(t, off, side) { const p = at(t); const nx = side > 0 ? -Math.sin(p.a) : Math.sin(p.a), ny = side > 0 ? Math.cos(p.a) : -Math.cos(p.a); return { x: p.x + nx * off, y: p.y + ny * off, a: p.a }; }
-const LM = [
-  { kind: 'station', ...stopSide(0, 48, 1), r: 46 },
-  { kind: 'market', ...stopSide(.2, 46, -1), r: 40 },
-  { kind: 'monument', ...stopSide(.4, 38, -1), r: 30 },
-  { kind: 'university', ...stopSide(.8, 50, -1), r: 50 },
-  { kind: 'church', x: 300, y: 392, a: 0, r: 34 },
-];
-const reserved = (x, y, pad = 0) => LM.some(l => Math.hypot(x - l.x, y - l.y) < l.r + pad);
-for (let gx = 0; gx < 1440; gx += G) for (let gy = 0; gy < 900; gy += G) {
-  const cx = gx + G/2, cy = gy + G/2, dr = dPoly(cx, cy, P);
-  const nearRiver = dPoly(cx, cy, R) < 46, park = inPark(cx, cy), depotCell = Math.hypot(cx-990, cy-570) < 60;
-  if (!nearRiver && !park && !depotCell) PADS.push([gx + 7, gy + 7, G - 14, G - 14]);
-  if (dr < 52 || nearRiver || park || avenues.some(a => dPoly(cx, cy, a) < 36) || depotCell || reserved(cx, cy, 6) || dPoly(cx, cy, RAIL) < 30) {
-    if (reserved(cx, cy, 6) || dPoly(cx, cy, RAIL) < 30) continue;
-    // empty blocks along the route become small squares with lawns and trees
-    if (!nearRiver && !park && !depotCell && dr > 16 && rnd() < .7) { LAWNS.push([gx + 14, gy + 14, G - 28, G - 28]);
-      for (let k = 0; k < 5; k++) { const tx = gx + 18 + rnd() * (G - 36), ty = gy + 18 + rnd() * (G - 36), ts = .6 + rnd() * .4, tt = rnd();
-        if (dPoly(tx, ty, P) > 18) TREES.push({ x: W(tx), z: Z(ty), s: ts, round: true, tone: tt }); } }
-    continue;
-  }
-  const hub = Math.exp(-Math.hypot(cx - 430, cy - 250) / 240), cap = dr < 200 ? 8 + (dr - 52) * .18 : 999;
-  const X = gx + 10, Y = gy + 10, S = G - 20, tone = Math.floor(rnd() * 5), roll = rnd();
-  const H = (lo, hi) => Math.min(lo + rnd() * (hi - lo), cap);
-  const tree = (x, y, s = .55) => TREES.push({ x: W(x), z: Z(y), s: s + rnd() * .25, round: true, tone: rnd() });
-  if (hub > .42 || roll > .86) { // downtown: podium + tower, or mixed boxes
-    const parts = rnd() < .45 ? 2 : 1;
-    for (let p = 0; p < parts; p++) {
-      let x = X, y = Y, w = S, d = S; if (parts === 2) { w = (w - 6) / 2; x += p * (w + 6); }
-      const h = Math.min(10 + rnd() * 20 + hub * 85 * (.6 + rnd() * .6), cap);
-      if (h > 55 && rnd() < .7) { blds.push([x, y, w, d, 14 + rnd() * 6, tone]); blds.push([x + w * .16, y + d * .16, w * .68, d * .68, h, tone]); }
-      else blds.push([x, y, w, d, h, tone]);
-    }
-  } else if (roll < .36) { // perimeter block around a green courtyard (the classic central-Russian block)
-    const h = H(16, 28), t = 11, h2 = rnd() < .5 ? h : h * .7;
-    blds.push([X, Y, S, t, h, tone], [X, Y + S - t, S, t, h, tone], [X, Y + t, t, S - 2 * t, h2, tone], [X + S - t, Y + t, t, S - 2 * t, h2, tone]);
-    LAWNS.push([X + t + 2, Y + t + 2, S - 2 * t - 4, S - 2 * t - 4]); tree(cx - 4, cy - 3, .45); tree(cx + 5, cy + 4, .45);
-  } else if (roll < .62) { // panel slabs, sometimes with a parking lot
-    const vert = rnd() < .5, h = H(28, 50), t = 13;
-    const slab = (o, len) => vert ? [X + o, Y, t, len, h, tone] : [X, Y + o, len, t, h, tone];
-    if (rnd() < .5) { blds.push(slab(2, S), slab(S - t - 2, S)); tree(cx, cy - 8); tree(cx, cy + 8); }
-    else { blds.push(slab(1, S)); const lot = vert ? [X + t + 8, Y + 4, S - t - 12, S - 8] : [X + 4, Y + t + 8, S - 8, S - t - 12]; LOTS.push({ r: lot, vert }); }
-  } else if (hub < .2 && dr > 120) { // private houses with pitched roofs on the outskirts
-    for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) { if (rnd() < .15) continue;
-      const w = 13 + rnd() * 4, d = 12 + rnd() * 4, x = X + 3 + i * 26 + rnd() * 4, y = Y + 3 + j * 26 + rnd() * 4, h = 6 + rnd() * 3;
-      blds.push([x, y, w, d, h, (tone + i + j) % 5]); ROOFS.push([x - 1, y - 1, w + 2, d + 2, h, 5 + rnd() * 2, rnd() < .5]); }
-    tree(X + 26, Y + 26, .6);
-  } else { // a couple of mid-rise blocks
-    const h = H(14, 30); blds.push([X, Y, S, 22, h, tone], [X, Y + 30, 24, 22, h * .8, (tone + 2) % 5]); tree(X + 40, Y + 40);
-  }
-}
-const inst = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), BOX_MATS(), blds.length);
-const mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), v = new THREE.Vector3(), sc = new THREE.Vector3();
-const edgeUnit = new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)).attributes.position.array;
-const edgePos = new Float32Array(edgeUnit.length * blds.length);
-blds.forEach(([x, y, w, d, h], i) => {
-  const cx = W(x + w/2), cy = h/20, cz = Z(y + d/2), sx = w/10, sy = h/10, sz = d/10;
-  v.set(cx, cy, cz); sc.set(sx, sy, sz); mtx.compose(v, q, sc); inst.setMatrixAt(i, mtx);
-  for (let k = 0; k < edgeUnit.length; k += 3) { const o = i * edgeUnit.length + k;
-    edgePos[o] = cx + edgeUnit[k] * sx; edgePos[o+1] = cy + edgeUnit[k+1] * sy; edgePos[o+2] = cz + edgeUnit[k+2] * sz; }
-});
-inst.castShadow = true; scene.add(inst);
-// block pads: kerbed sidewalks around every block
-const padM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), [M.padSide, M.padSide, M.padTop, M.padTop, M.padSide, M.padSide], PADS.length);
-PADS.forEach(([x, y, w, d], i) => { v.set(W(x + w/2), .02, Z(y + d/2)); sc.set(w/10, .04, d/10); mtx.compose(v, q, sc); padM.setMatrixAt(i, mtx); });
-padM.receiveShadow = false; scene.add(padM);
-const lawnM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), M.park, LAWNS.length);
-LAWNS.forEach(([x, y, w, d], i) => { v.set(W(x + w/2), .045, Z(y + d/2)); sc.set(w/10, .012, d/10); mtx.compose(v, q, sc); lawnM.setMatrixAt(i, mtx); });
-scene.add(lawnM);
-// rooftop plant: lift rooms and AC units on mid- and high-rise roofs
-const KIT = [];
-for (const [x, y, w, d, h] of blds) if (h > 22) { const n = 1 + (rnd() < .5); for (let k = 0; k < n; k++) {
-  const kw = w * (.18 + rnd() * .16), kd = d * (.18 + rnd() * .16); KIT.push([x + w * .12 + rnd() * (w * .76 - kw), y + d * .12 + rnd() * (d * .76 - kd), kw, kd, h, 3 + rnd() * 4]); } }
-const kitM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), ROOF_MATS(), KIT.length);
-KIT.forEach(([x, y, w, d, h, kh], i) => { v.set(W(x + w/2), h/10 + kh/20, Z(y + d/2)); sc.set(w/10, kh/10, d/10); mtx.compose(v, q, sc); kitM.setMatrixAt(i, mtx); });
-kitM.castShadow = true; scene.add(kitM);
-// pitched roofs (prism, ridge along z or x)
-const prismG = (() => { const sh = new THREE.Shape(); sh.moveTo(-.5, 0); sh.lineTo(.5, 0); sh.lineTo(0, 1); sh.lineTo(-.5, 0); const g = new THREE.ExtrudeGeometry(sh, { depth: 1, bevelEnabled: false }); g.translate(0, 0, -.5); return g; })();
-const roofM = new THREE.InstancedMesh(prismG, M.roofTile, Math.max(1, ROOFS.length)); roofM.count = ROOFS.length;
-ROOFS.forEach(([x, y, w, d, h, rh, alongX], i) => { v.set(W(x + w/2), h/10, Z(y + d/2)); tq.setFromAxisAngle(up3, alongX ? Math.PI / 2 : 0);
-  sc.set((alongX ? d : w) / 10, rh / 10, (alongX ? w : d) / 10); mtx.compose(v, tq, sc); roofM.setMatrixAt(i, mtx); });
-roofM.castShadow = true; scene.add(roofM);
-// parking lots with parked cars
-const lotStrips = [], lotLines = [], PARKED = [];
-for (const { r: [x, y, w, d], vert } of LOTS) {
-  lotStrips.push([W(x), Z(y), W(x + w), Z(y + d)]);
-  const n = Math.floor((vert ? d : w) / 7);
-  for (let k = 0; k <= n; k++) { const o = k * 7 + 1;
-    if (vert) { lotLines.push([W(x), Z(y + o) - .02, W(x + w * .42), Z(y + o) + .02], [W(x + w * .58), Z(y + o) - .02, W(x + w), Z(y + o) + .02]); }
-    else { lotLines.push([W(x + o) - .02, Z(y), W(x + o) + .02, Z(y + d * .42)], [W(x + o) - .02, Z(y + d * .58), W(x + o) + .02, Z(y + d)]); }
-    if (k < n) for (const side of [0, 1]) if (rnd() < .7) PARKED.push(vert ? [W(x + (side ? w * .79 : w * .21)), Z(y + o + 3.5), 0] : [W(x + o + 3.5), Z(y + (side ? d * .79 : d * .21)), Math.PI / 2]);
-  }
-}
-strips(lotStrips, .049, M.street); strips(lotLines, .051, M.lane);
-const pBody = new THREE.InstancedMesh(box(1, .26, .48, 0, .2, 0), M.car, Math.max(1, PARKED.length)), pTop = new THREE.InstancedMesh(box(.55, .18, .42, -.05, .42, 0), M.carGlass, Math.max(1, PARKED.length));
-pBody.count = pTop.count = PARKED.length;
-PARKED.forEach(([x, z, a], i) => { v.set(x, .05, z); tq.setFromAxisAngle(up3, a); sc.set(.85, .85, .85); mtx.compose(v, tq, sc); pBody.setMatrixAt(i, mtx); pTop.setMatrixAt(i, mtx); });
-pBody.castShadow = true; scene.add(pBody, pTop);
-
-// ---------- landmarks ----------
-const unitBox = new THREE.BoxGeometry(1, 1, 1);
-function lb(g, mats, sx, sy, sz, x, y, z) { const m = new THREE.Mesh(unitBox, mats); m.scale.set(sx, sy, sz); m.position.set(x, y + sy / 2, z); m.castShadow = true; g.add(m); return m; }
-function lm(g, geo, mat, x, y, z, ry = 0) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.y = ry; m.castShadow = true; g.add(m); return m; }
-const PLAIN = () => [M.roofR, M.roofL, M.top, M.top, M.roofL, M.roofR];
-const BUILD = {
-  station(g) { lb(g, BOX_MATS(), 5.4, 1.3, 1.9, 0, 0, 0); lb(g, BOX_MATS(), 1, 3.4, 1, 0, 0, -.1);
-    lm(g, new THREE.ConeGeometry(.78, .9, 4), M.roofTile, 0, 3.85, -.1, Math.PI / 4);
-    lb(g, PLAIN(), 5.6, .08, 1.1, 0, .95, 1.6); for (const x of [-2.6, -.9, .9, 2.6]) lb(g, PLAIN(), .07, .95, .07, x, 0, 2.05); },
-  market(g) { lb(g, PLAIN(), 3, .9, 4, 0, 0, 0); const r = lm(g, prismG, M.roofTile, 0, .9, 0); r.scale.set(3.2, 1, 4.2);
-    for (let i = 0; i < 5; i++) { lb(g, PLAIN(), .55, .35, .45, -1.6 + i * .8, 0, 2.7); lm(g, prismG, M.dome, -1.6 + i * .8, .35, 2.7).scale.set(.62, .22, .5); } },
-  monument(g) { lm(g, new THREE.CylinderGeometry(2.2, 2.2, .03, 40), M.lane, 0, .07, 0); lm(g, new THREE.CylinderGeometry(1.25, 1.25, .04, 40), M.padSide, 0, .08, 0);
-    lb(g, PLAIN(), .9, .55, .9, 0, .08, 0); lm(g, new THREE.CylinderGeometry(.07, .22, 3.2, 4), M.lmWall, 0, 2.2, 0, Math.PI / 4);
-    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; TREES.push({ x: g.position.x + Math.cos(a) * 1.75, z: g.position.z + Math.sin(a) * 1.75, s: .5, round: true, tone: rnd() }); } },
-  university(g) { lb(g, BOX_MATS(), 6.2, 2.2, 1.6, 0, 0, 0); lb(g, BOX_MATS(), 1.4, 2.2, 3.4, -2.4, 0, 1.6); lb(g, BOX_MATS(), 1.4, 2.2, 3.4, 2.4, 0, 1.6);
-    lb(g, BOX_MATS(), 1.3, 3.8, 1.3, 0, 0, 0); lm(g, new THREE.ConeGeometry(.42, 1.8, 8), M.dome, 0, 4.7, 0);
-    lb(g, PLAIN(), 2.8, .03, 2.4, 0, .05, 2.1); },
-  church(g) { lb(g, PLAIN(), 1.5, 1.2, 2.6, 0, 0, 0); lm(g, new THREE.CylinderGeometry(.48, .48, .6, 20), M.lmWall, 0, 1.5, -.2);
-    const d = lm(g, new THREE.SphereGeometry(.52, 20, 14), M.dome, 0, 2.05, -.2); d.scale.set(1, 1.3, 1);
-    lb(g, PLAIN(), .05, .5, .05, 0, 2.6, -.2); lb(g, PLAIN(), .3, .05, .05, 0, 2.95, -.2);
-    lb(g, PLAIN(), .75, 2.3, .75, 0, 0, 1.75); lm(g, new THREE.ConeGeometry(.5, 1, 8), M.dome, 0, 2.8, 1.75); },
-};
-for (const l of LM) { const g = new THREE.Group(); g.position.set(W(l.x), .05, Z(l.y)); g.rotation.y = -l.a; scene.add(g); BUILD[l.kind](g); }
-
-// ---------- railway with a passing train ----------
-const railW = RAIL.map(toW);
-ribbon(railW, 1.15, .044, M.ballast);
-for (const o of [-.24, .24]) { const pts = railW.map((p, i) => { const a = railW[Math.max(0, i - 1)], b = railW[Math.min(railW.length - 1, i + 1)]; let tx = b[0]-a[0], tz = b[1]-a[1]; const l = Math.hypot(tx, tz) || 1; return [p[0] - tz / l * o, p[1] + tx / l * o]; }); ribbon(pts, .07, .047, M.rail); }
-const RL = [0]; for (let i = 1; i < railW.length; i++) RL.push(RL[i-1] + Math.hypot(railW[i][0] - railW[i-1][0], railW[i][1] - railW[i-1][1]));
-const railAt = d => { const T = RL[RL.length - 1]; d = ((d % T) + T) % T; let i = 1; while (i < RL.length - 1 && RL[i] < d) i++; const k = (d - RL[i-1]) / ((RL[i] - RL[i-1]) || 1), a = railW[i-1], b = railW[i]; return { x: a[0] + (b[0]-a[0]) * k, z: a[1] + (b[1]-a[1]) * k, a: Math.atan2(b[1]-a[1], b[0]-a[0]) }; };
-const train = [...Array(5)].map(() => { const g = new THREE.Group();
-  lb(g, [M.busBody, M.busBody, M.batt, M.batt, M.busBody, M.busBody], 2.4, .62, .62, 0, .12, 0).castShadow = true;
-  lb(g, M.glass, 2.42, .16, .64, 0, .48, 0); scene.add(g); return g; });
-let trainD = 30;
-function updateTrain(dt) { trainD += dt * 3.2; train.forEach((g, i) => { const p = railAt(trainD - i * 2.55); g.position.set(p.x, .05, p.z); g.rotation.y = -p.a; }); }
-updateTrain(0);
-
-// ---------- street lights along the avenues (they glow at night) ----------
-const LIGHTS = [];
-for (const [a, b] of avenues) { const len = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / len, uy = (b[1] - a[1]) / len;
-  for (let d = 25; d < len; d += 30) for (const side of [-1, 1]) {
-    const px = a[0] + ux * d - uy * 13 * side, py = a[1] + uy * d + ux * 13 * side;
-    if (dPoly(px, py, P) < 18 || dPoly(px, py, R) < 22 || inPark(px, py) || Math.hypot(px - 990, py - 570) < 60 || reserved(px, py)) continue;
-    if (XL.some(c => Math.abs(W(px) - c) < 1) || ZL.some(c => Math.abs(Z(py) - c) < 1)) continue;
-    LIGHTS.push([W(px), Z(py), Math.atan2(-(uy * side), (ux * side)) + Math.PI / 2 * 0, side, ux, uy]); } }
-const poleM = new THREE.InstancedMesh(box(.06, 1.3, .06, 0, .65, 0), M.batt, LIGHTS.length), headM = new THREE.InstancedMesh(box(.26, .06, .12, 0, 1.3, 0), M.lamp, LIGHTS.length);
-const glowM = new THREE.InstancedMesh(new THREE.CircleGeometry(.7, 20).rotateX(-Math.PI / 2), M.lampGlow, LIGHTS.length);
-LIGHTS.forEach(([x, z, , side, ux, uy], i) => {
-  v.set(x, .05, z); mtx.compose(v, q, one); poleM.setMatrixAt(i, mtx);
-  const hx = x + uy * side * .14, hz = z - ux * side * .14; v.set(hx, .05, hz); tq.setFromAxisAngle(up3, -Math.atan2(-ux * side, uy * side)); mtx.compose(v, tq, one); headM.setMatrixAt(i, mtx);
-  v.set(x + uy * side * .5, .056, z - ux * side * .5); mtx.compose(v, q, one); glowM.setMatrixAt(i, mtx); });
-poleM.castShadow = true; scene.add(poleM, headM, glowM);
-
-// ---------- bridge railings where streets and avenues cross the river ----------
-const RAILS = [];
-function railings(A, B, half) { // A,B in map px; half-width in world units
-  const len = Math.hypot(B[0] - A[0], B[1] - A[1]), ux = (B[0] - A[0]) / len, uy = (B[1] - A[1]) / len; let run = null;
-  const flush = () => { if (!run) return; const [s0, s1] = run, mid = (s0 + s1) / 2, L2 = (s1 - s0) / 10 + .8, cxp = A[0] + ux * mid, cyp = A[1] + uy * mid;
-    for (const sd of [-1, 1]) RAILS.push([W(cxp - uy * sd * half * 10), Z(cyp + ux * sd * half * 10), L2, Math.atan2(uy, ux)]); run = null; };
-  for (let s = 0; s <= len; s += 2) { const x = A[0] + ux * s, y = A[1] + uy * s; if (dPoly(x, y, R) < 13) { if (!run) run = [s, s]; else run[1] = s; } else flush(); }
-  flush(); }
-for (const x of XL) railings([x * 10 + 720, 0], [x * 10 + 720, 900], .72);
-for (const z of ZL) railings([0, z * 10 + 450], [1440, z * 10 + 450], .72);
-for (const [a, b] of avenues) railings(a, b, 1.18);
-const railM = new THREE.InstancedMesh(box(1, .14, .05, 0, .07, 0), M.padSide, Math.max(1, RAILS.length)); railM.count = RAILS.length;
-RAILS.forEach(([x, z, l, a], i) => { v.set(x, .05, z); tq.setFromAxisAngle(up3, -a); sc.set(l, 1, 1); mtx.compose(v, tq, sc); railM.setMatrixAt(i, mtx); });
-scene.add(railM);
-
-// facade tints: buildings are not all the same white
-var recolorCity = function (dark) {
-  const pal = dark ? ['#FFFFFF', '#EDEDEF', '#F4F1EC', '#E2E5E9', '#F7F4EF'] : ['#FFFFFF', '#F6F3EE', '#EEF1F5', '#F3F1EC', '#EAEDF1'], col = new THREE.Color();
-  blds.forEach((b, i) => inst.setColorAt(i, col.set(pal[b[5] || 0]))); inst.instanceColor.needsUpdate = true;
-  KIT.forEach((k, i) => kitM.setColorAt(i, col.set('#FFFFFF'))); if (kitM.instanceColor) kitM.instanceColor.needsUpdate = true;
-  const cp = dark ? CAR_D : CAR_L; PARKED.forEach((p, i) => pBody.setColorAt(i, col.set(cp[i % 6]))); if (pBody.instanceColor) pBody.instanceColor.needsUpdate = true; };
-// street trees along both avenues
-for (const av of avenues) { const [a, b] = av, len = Math.hypot(b[0] - a[0], b[1] - a[1]), ux = (b[0] - a[0]) / len, uy = (b[1] - a[1]) / len;
-  for (let d = 10; d < len; d += 30) for (const side of [-1, 1]) {
-    const px = a[0] + ux * d - uy * 16 * side, py = a[1] + uy * d + ux * 16 * side;
-    if (dPoly(px, py, P) < 22 || dPoly(px, py, R) < 26 || inPark(px, py) || Math.hypot(px - 990, py - 570) < 60) continue;
-    if (XL.some(c => Math.abs(W(px) - c) < 1.2) || ZL.some(c => Math.abs(Z(py) - c) < 1.2)) continue;
-    TREES.push({ x: W(px), z: Z(py), s: .55 + rnd() * .2, round: true, tone: rnd() }); } }
-for (let i = TREES.length - 1; i >= 0; i--) { const t = TREES[i], px = t.x * 10 + 720, py = t.z * 10 + 450;
-  if (dPoly(px, py, RAIL) < 14 || dPoly(px, py, P) < 27 || LM.some(l => l.kind !== 'monument' && Math.hypot(px - l.x, py - l.y) < l.r - 4)) TREES.splice(i, 1); }
-const roundT = TREES.filter(t => t.round), coneT = TREES.filter(t => !t.round);
-const crownG = new THREE.IcosahedronGeometry(.5, 1); crownG.translate(0, 1, 0);
-const coneG = new THREE.ConeGeometry(.42, 1.3, 7); coneG.translate(0, .95, 0);
-const trunkG = new THREE.CylinderGeometry(.05, .07, .6, 5); trunkG.translate(0, .3, 0);
-const crowns = new THREE.InstancedMesh(crownG, M.tree, roundT.length), cones = new THREE.InstancedMesh(coneG, M.tree, coneT.length), trunks = new THREE.InstancedMesh(trunkG, M.trunk, TREES.length);
-[[roundT, crowns], [coneT, cones]].forEach(([list, mesh]) => list.forEach((t, i) => { v.set(t.x, .05, t.z); sc.setScalar(t.s); tq.setFromAxisAngle(new THREE.Vector3(0, 1, 0), t.tone * 6); mtx.compose(v, tq, sc); mesh.setMatrixAt(i, mtx); }));
-TREES.forEach((t, i) => { v.set(t.x, .05, t.z); sc.setScalar(t.s); mtx.compose(v, q, sc); trunks.setMatrixAt(i, mtx); });
-crowns.castShadow = cones.castShadow = true; scene.add(crowns, cones, trunks);
-var recolorTrees = function (dark) { const base = new THREE.Color(css('--tree')), col = new THREE.Color();
-  [[roundT, crowns], [coneT, cones]].forEach(([list, mesh]) => { list.forEach((t, i) => mesh.setColorAt(i, col.copy(base).offsetHSL(0, 0, (t.tone - .5) * (dark ? .05 : .09)))); if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; }); };
-const eg = new THREE.BufferGeometry(); eg.setAttribute('position', new THREE.BufferAttribute(edgePos, 3));
-const edgeLines = new THREE.LineSegments(eg, M.edge); scene.add(edgeLines);
-
-// depot
-// depot: open yard with bay markings and a maintenance shed — reads as a depot, not as a blue box
-const depot = new THREE.Group();
-const yard = new THREE.Mesh(new THREE.BoxGeometry(9, .06, 6.4), M.street); yard.position.y = .05;
-const shed = new THREE.Mesh(new THREE.BoxGeometry(8.6, 1.8, 1.9), BOX_MATS()); shed.position.set(0, .9, -2.15); shed.castShadow = true;
-const accent = new THREE.Mesh(new THREE.BoxGeometry(8.62, .18, .04), M.depotRoof); accent.position.set(0, 1.62, -1.19);
-depot.add(yard, shed, accent);
-for (let i = 0; i <= 6; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(.06, .02, 2.9), M.lane); m.position.set(-3.9 + i * 1.3, .09, .9); depot.add(m); }
-depot.position.set(W(990), 0, Z(570)); scene.add(depot);
-
-// ---------- pulse rings at the breakdown ----------
-const BRK = at(GAP[0]);
-var rings = [0, 1, 2].map(i => { const m = new THREE.Mesh(new THREE.RingGeometry(1.9, 2.1, 48), M.ring.clone()); m.rotation.x = -Math.PI/2; m.position.set(W(BRK.x), .12, Z(BRK.y)); scene.add(m); return m; });
-
-// ---------- buses ----------
-// A low-floor city bus, readable from the dispatcher's height: white body, dark window band with pillars,
-// doors on the kerb side, wheels, head/tail lights, a destination display, and the roof painted in the status colour.
-// Status lives on the roof because the roof is what the camera sees most — same idea as the fill of the Figma marker.
-const BL = 2.6, BW = .9;
-function rr(l, w, r) { const s = new THREE.Shape(), x = -l/2, y = -w/2;
-  s.moveTo(x + r, y); s.lineTo(x + l - r, y); s.quadraticCurveTo(x + l, y, x + l, y + r); s.lineTo(x + l, y + w - r); s.quadraticCurveTo(x + l, y + w, x + l - r, y + w);
-  s.lineTo(x + r, y + w); s.quadraticCurveTo(x, y + w, x, y + w - r); s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y); return s; }
-function slabG(l, w, r, h, y0) { const g = new THREE.ExtrudeGeometry(rr(l, w, r), { depth: h, bevelEnabled: false, curveSegments: 4 }); g.rotateX(-Math.PI / 2); g.translate(0, y0, 0); return g; }
-const BG = {
-  skirt: slabG(BL, BW, .16, .30, .14), glass: slabG(BL - .01, BW - .01, .155, .38, .44), upper: slabG(BL, BW, .16, .12, .82),
-  roof: slabG(BL - .2, BW - .18, .1, .03, .94), stripe: slabG(BL + .012, BW + .012, .166, .05, .30),
-  pillars: [-.95, -.5, -.05, .4].map(x => box(.07, .38, BW + .006, x, .63, 0)),
-  doors: [.88, -.2].map(x => box(.36, .58, .02, x, .43, BW / 2 + .006)),
-  wheel: (() => { const g = new THREE.CylinderGeometry(.18, .18, .13, 14); g.rotateX(Math.PI / 2); return g; })(),
-  head: [-.28, .28].map(z => box(.02, .07, .16, BL / 2 + .004, .30, z)), tail: [-.3, .3].map(z => box(.02, .1, .1, -BL / 2 - .004, .32, z)),
-  dest: box(.02, .09, .5, BL / 2 - .004, .76, 0), ac: box(.6, .1, .5, -.6, .99, 0),
-  batt: [box(.62, .09, .56, .3, .98, 0), box(.62, .09, .56, -.42, .98, 0)],
-  hazard: [[BL/2, BW/2], [BL/2, -BW/2], [-BL/2, BW/2], [-BL/2, -BW/2]].map(([x, z]) => box(.08, .08, .08, x * .99, .42, z * .99)),
-};
-function makeBus(roofMat, electric) {
-  const g = new THREE.Group(), add = (geo, mat, shadow) => { const m = new THREE.Mesh(geo, mat); if (shadow) m.castShadow = true; g.add(m); return m; };
-  add(BG.skirt, M.busBody, true); add(BG.glass, M.glass, true); add(BG.upper, M.busBody, true);
-  g.userData.roof = add(BG.roof, roofMat); g.userData.stripe = add(BG.stripe, roofMat);
-  BG.pillars.forEach(p => add(p, M.busBody)); BG.doors.forEach(p => add(p, M.glass));
-  for (const [x, z] of [[.85, BW/2 - .05], [.85, -BW/2 + .05], [-.75, BW/2 - .05], [-.75, -BW/2 + .05]]) add(BG.wheel, M.wheel).position.set(x, .18, z);
-  BG.head.forEach(p => add(p, M.head)); BG.tail.forEach(p => add(p, M.tail)); add(BG.dest, M.dest);
-  if (electric) BG.batt.forEach(p => add(p, M.batt)); else add(BG.ac, M.busBody, true);
-  g.userData.hazard = BG.hazard.map(p => { const m = add(p, M.hazard); m.visible = false; return m; });
-  return g;
-}
-const ROOF = { normal: () => M.busN, delay: () => M.busD, crit: () => M.busC, res: () => M.busR };
-function paint(b, kind) { b.kind = kind; const m = ROOF[kind](); b.mesh.userData.roof.material = m; b.mesh.userData.stripe.material = m;
-  b.el.className = 'bus ' + (kind === 'normal' ? '' : kind); }
-const ELECTRIC = new Set(['4403', '4409', '4417', '4502']);
-const ICON = {
-  bus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="5" y="3" width="14" height="15" rx="3"/><path d="M5 11h14M8 18v3M16 18v3"/></svg>',
-  warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M12 3 22 20H2Z"/><path d="M12 10v4"/></svg>',
-  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="13" r="8"/><path d="M12 9v4M9 2h6"/></svg>',
-  swap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12a8 8 0 0 1 14-5l2 2M20 12a8 8 0 0 1-14 5l-2-2"/></svg>',
-};
-const labelsEl = document.getElementById('labels');
-const buses = [];
-function addBus(num, kind, t, extra = {}) {
-  const mesh = makeBus(ROOF[kind](), ELECTRIC.has(num)); scene.add(mesh);
-  const el = document.createElement('div'); el.className = 'bus ' + (kind === 'normal' ? '' : kind);
-  el.innerHTML = (kind === 'crit' ? ICON.warn : kind === 'delay' ? ICON.clock : kind === 'res' ? ICON.swap : ICON.bus) + num + (kind === 'delay' ? ' <em>+4</em>' : '');
-  labelsEl.appendChild(el);
-  const b = { num, kind, t, mesh, el, lift: kind === 'crit' ? 7 : 4.2, ...extra }; buses.push(b); return b;
-}
-const line = [['4401','normal',.04],['4403','normal',.17],['4405','delay',.31],['4407','normal',.66],['4409','normal',.78],['4410','normal',.92]].map(([n,k,t]) => addBus(n, k, t, { route: true }));
-const broken = addBus('4412', 'crit', GAP[0], { route: true, fixed: true });
-const r4417 = addBus('4417', 'res', 0, { free: [965, 528], freeA: -Math.PI / 2 });
-const r4502 = addBus('4502', 'res', 0, { free: [983.5, 579], freeA: -Math.PI / 2 });
-const r4380 = addBus('4380', 'res', 0, { free: [576, 504], freeA: 0 });
-r4417.lift = 5.2; r4502.el.style.pointerEvents = 'none';
-// buses parked in the depot bays (neutral roof: not in service, not in reserve)
-[-3.25, -1.95, .65, 1.95].forEach(x => { const b = makeBus(M.busN, true); b.rotation.y = Math.PI / 2; b.position.set(W(990) + x, .08, Z(570) + .9); scene.add(b); });
-// broken bus: pulled over to the kerb, hazards on, warning triangle set out behind it
-broken.pull = .55; broken.mesh.userData.hazard.forEach(h => h.visible = true);
-{ const sh = new THREE.Shape(); sh.moveTo(-.3, 0); sh.lineTo(.3, 0); sh.lineTo(0, .52); sh.lineTo(-.3, 0);
-  const hole = new THREE.Path(); hole.moveTo(-.17, .08); hole.lineTo(0, .38); hole.lineTo(.17, .08); hole.lineTo(-.17, .08); sh.holes.push(hole);
-  const tg = new THREE.ShapeGeometry(sh); tg.rotateY(-Math.PI / 2); const tri = new THREE.Mesh(tg, M.warn); tri.position.set(-3, .04, 0); tri.scale.setScalar(1.6); broken.mesh.add(tri); }
-
-// ---------- reserve routes to the breakdown, along real streets, corners rounded ----------
-function makePath(pts) {
-  const QP = [pts[0]];
-  for (let i = 1; i < pts.length - 1; i++) {
-    const [a, b, c] = [pts[i - 1], pts[i], pts[i + 1]], r = 8;
-    const u = (p, q) => { const l = Math.hypot(q[0] - p[0], q[1] - p[1]); return [(q[0] - p[0]) / l, (q[1] - p[1]) / l]; };
-    const d1 = u(b, a), d2 = u(b, c), p1 = [b[0] + d1[0] * r, b[1] + d1[1] * r], p2 = [b[0] + d2[0] * r, b[1] + d2[1] * r];
-    for (let t = 0; t <= 1.0001; t += .2) { const v = 1 - t; QP.push([v*v*p1[0] + 2*v*t*b[0] + t*t*p2[0], v*v*p1[1] + 2*v*t*b[1] + t*t*p2[1]]); }
-  }
-  QP.push(pts[pts.length - 1]);
-  const QL = [0]; for (let i = 1; i < QP.length; i++) QL.push(QL[i - 1] + Math.hypot(QP[i][0] - QP[i-1][0], QP[i][1] - QP[i-1][1]));
-  const len = QL[QL.length - 1];
-  const qb = (t) => { const d = Math.max(0, Math.min(1, t)) * len; let i = 1; while (i < QL.length - 1 && QL[i] < d) i++;
-    const k = (d - QL[i - 1]) / ((QL[i] - QL[i - 1]) || 1); return [QP[i-1][0] + (QP[i][0] - QP[i-1][0]) * k, QP[i-1][1] + (QP[i][1] - QP[i-1][1]) * k]; };
-  const group = new THREE.Group(), n = Math.round(len / 7);
-  for (let i = 0; i < n; i += 2) { const d = ribbon([qb(i / n), qb((i + 1) / n)].map(toW), .4, .11, M.path); scene.remove(d); group.add(d); }
-  scene.add(group); group.visible = false;
-  return { qb, len, group, mid: qb(.5) };
-}
-// numbers match the reserve panel of screen 02 in Figma
-const RES = {
-  '4417': { bus: r4417, path: makePath([[965, 528], [965, 504], [864, 504], [864, 472], [BRK.x, BRK.y]]), eta: 6, arrive: '14:38', closed: '14:41' },
-  '4380': { bus: r4380, path: makePath([[576, 504], [864, 504], [864, 472], [BRK.x, BRK.y]]), eta: 11, arrive: '14:43', closed: '14:46' },
-};
-
-// place labels for stops
-const places = [['Вокзал', 0], ['Рынок', .2], ['Пл. Мира', .4], ['Ул. Ленина', .6], ['Университет', .8], ['Северная', 1]].map(([n, t]) => {
-  const el = document.createElement('div'); el.className = 'place'; el.textContent = n; labelsEl.appendChild(el); const p = at(t); return { el, pos: new THREE.Vector3(W(p.x), .3, Z(p.y)) };
-});
-
-// ---------- background traffic: neutral grey cars give the buses scale and keep colour for deviations only ----------
-seed = 23;
-const NC = 90, carBody = new THREE.InstancedMesh(box(1, .26, .48, 0, .2, 0), M.car, NC), carTop = new THREE.InstancedMesh(box(.55, .18, .42, -.05, .42, 0), M.carGlass, NC);
-carBody.castShadow = true; scene.add(carBody, carTop);
-const cars = [...Array(NC)].map(() => { const vert = rnd() < .55, list = vert ? XL : ZL; return { vert, c: list[Math.floor(rnd() * list.length)], dir: rnd() < .5 ? 1 : -1, s: (rnd() - .5) * (vert ? 88 : 142), v: 1.6 + rnd() * 1.6, tone: Math.floor(rnd() * 6) }; });
-const CAR_L = ['#F4F5F6', '#D9DCE0', '#B4BAC1', '#868C93', '#4B5056', '#2A2D31'], CAR_D = ['#9EA3AA', '#7E838A', '#62666C', '#4C5056', '#3A3D42', '#2B2D31'];
-var recolorCars = function(dark) { const pal = dark ? CAR_D : CAR_L, col = new THREE.Color(); cars.forEach((c, i) => carBody.setColorAt(i, col.set(pal[c.tone]))); carBody.instanceColor.needsUpdate = true; }
-const cq = new THREE.Quaternion();
-function updateCars(dt) {
-  cars.forEach((c, i) => {
-    const half = c.vert ? 44 : 71; c.s += c.v * c.dir * dt; if (c.s > half) c.s = -half; if (c.s < -half) c.s = half;
-    const lane = .3 * c.dir, x = c.vert ? c.c - lane : c.s, z = c.vert ? c.s : c.c + lane;
-    cq.setFromAxisAngle(up3, c.vert ? (c.dir > 0 ? -Math.PI / 2 : Math.PI / 2) : (c.dir > 0 ? 0 : Math.PI));
-    const hide = inPark(x * 10 + 720, z * 10 + 450) || Math.hypot(x - W(BRK.x), z - Z(BRK.y)) < 2.2;
-    v.set(x, .045, z); mtx.compose(v, cq, hide ? zero : one); carBody.setMatrixAt(i, mtx); carTop.setMatrixAt(i, mtx);
-  });
-  carBody.instanceMatrix.needsUpdate = carTop.instanceMatrix.needsUpdate = true;
-}
-updateCars(0);
-
-// ---------- scenario state ----------
-const state = { phase: 'alert', k: 0, joinedT: 0, startClock: null };
-const $ = id => document.getElementById(id);
-const stepsEl = $('steps');
-function setStep(n) { [...stepsEl.children].forEach((li, i) => { li.className = i < n ? 'done' : i === n ? 'now' : ''; }); curStep = n; opsRender(); }
-function fmt(dMin) { const m = 32 + dMin, h = 14 + Math.floor(m / 60); return `${h}:${String(m % 60).padStart(2, '0')}`; }
-let sel = '4417';
-function framePath(r) { const m = r.path.mid, d = Math.min(130, Math.max(46, r.path.len / 10 * 1.1)); fly({ target: new THREE.Vector3((W(m[0]) + W(BRK.x)) / 2, 0, (Z(m[1]) + Z(BRK.y)) / 2), dist: d, pol: .85 }); }
-function select(n, frame = true) {
-  if (state.phase !== 'alert' || !RES[n]) return;
-  sel = n; follow = false;
-  document.querySelectorAll('.rrow[data-n]').forEach(r => { const on = r.dataset.n === n; r.classList.toggle('sel', on); if (!r.classList.contains('off')) r.setAttribute('aria-pressed', on); });
-  for (const [k, r] of Object.entries(RES)) { r.path.group.visible = k === n; r.bus.el.classList.toggle('sel', k === n); }
-  M.path.opacity = .55;
-  $('assign').textContent = `Назначить ${n} на маршрут №10`;
-  if (frame) framePath(RES[n]);
-  opsRender();
-}
-document.querySelectorAll('.rrow[data-n]').forEach(r => r.addEventListener('click', () => { if (!r.classList.contains('off')) select(r.dataset.n); }));
-for (const [k, r] of Object.entries(RES)) r.bus.el.addEventListener('click', () => select(k));
-$('assign').addEventListener('click', () => {
-  if (state.phase !== 'alert') { reset(); return; }
-  const r = RES[sel];
-  state.phase = 'enroute'; state.k = 0; M.path.opacity = .9; r.bus.el.classList.remove('sel');
-  $('res').hidden = true; stepsEl.hidden = false; setStep(1); $('t2').textContent = `≈ ${r.eta} мин`;
-  setTimeout(() => { if (state.phase === 'enroute') { $('t1').textContent = '14:32'; setStep(2); } }, 900);
-  $('alert').classList.add('calm');
-  $('alertTitle').textContent = `Замена назначена · ${sel} в пути`;
-  $('alertMeta').textContent = `${sel} вместо 4412 · закроет разрыв в ${r.arrive}`;
-  $('assign').textContent = 'Сбросить сценарий';
-  $('chipRes').textContent = '2 в резерве';
-  M.gap.color = new THREE.Color(css('--res')); M.gapGlow.color = new THREE.Color(css('--res'));
-  follow = true; fly({ dist: 52, pol: .82 });
-  opsRender();
-});
-function reset() {
-  state.phase = 'alert'; stepsEl.hidden = true; $('res').hidden = false;
-  $('alert').classList.remove('calm');
-  $('alertTitle').textContent = 'Поломка · Маршрут №10';
-  $('alertMeta').textContent = 'Борт 4412 у «Пл. Мира» · разрыв 14 мин, 2 остановки';
-  $('chipRes').textContent = '3 в резерве'; $('t1').textContent = '—'; $('t2').textContent = '—'; $('t3').textContent = '—';
-  gapLine.visible = gapGlow.visible = true; applyTheme();
-  for (const r of Object.values(RES)) { r.bus.route = false; r.bus.t = 0; paint(r.bus, 'res'); }
-  follow = false; line.forEach((b, i) => b.t = [.04, .17, .31, .66, .78, .92][i]);
-  select(sel, false);
-  if (OPS) OPS.view = '01'; curStep = 0; opsRender();
-}
-$('focus').addEventListener('click', () => (follow = false, fly({ target: new THREE.Vector3(W(BRK.x), 0, Z(BRK.y)), dist: 40, pol: .8 })));
-$('overview').addEventListener('click', () => (follow = false, fly({ target: new THREE.Vector3(0, 0, 4), dist: 175, pol: .95, az: Math.PI / 4 })));
-
-// ---------- camera fly ----------
-let flight = null, follow = false;
-// ---------- 2D · работа / 3D · обзор: one scene, two readings ----------
-// 2D flattens the city into a plan, locks north-up and turns drag into pan; buses grow into constant-size markers.
-let mode = '3d', flat = 1;
-const TALL = () => [inst, edgeLines, kitM, crowns, cones, trunks, depot];
-function setMode(m) {
-  if (m === mode) return; mode = m;
-  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === m));
-  document.body.classList.toggle('mode-2d', m === '2d');
-  if (m === '2d') OPS.enter();
-}
-document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.m)));
-function fly(to, dur = 1300) {
-  const from = { target: cam.target.clone(), dist: cam.dist, pol: cam.pol, az: cam.az };
-  flight = { from, keep: !to.target, to: { target: to.target || from.target, dist: to.dist ?? from.dist, pol: to.pol ?? from.pol, az: to.az ?? from.az }, t0: performance.now(), dur: reduce ? 1 : dur };
-}
-const ease = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
-
-// ---------- input: drag rotate, wheel/pinch zoom ----------
-const ptrs = new Map(); let pinch0 = 0;
-canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); canvas.classList.add('drag'); flight = null; follow = false; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); } });
-canvas.addEventListener('pointermove', e => {
-  if (!ptrs.has(e.pointerId)) return;
-  const p = ptrs.get(e.pointerId), dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
-  if (ptrs.size === 1 && false) { const k = cam.dist * 2 * Math.tan(camera.fov * Math.PI / 360) / innerHeight; cam.target.x -= dx * k; cam.target.z -= dy * k; }
-  else if (ptrs.size === 1) { cam.az -= dx * .006; cam.pol = Math.min(1.35, Math.max(.35, cam.pol - dy * .004)); }
-  else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0) zoom(pinch0 / d); pinch0 = d; }
-});
-const up = e => { ptrs.delete(e.pointerId); if (!ptrs.size) canvas.classList.remove('drag'); pinch0 = 0; };
-canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
-function zoom(f) { cam.dist = Math.min(260, Math.max(28, cam.dist * f)); }
-canvas.addEventListener('wheel', e => { e.preventDefault(); flight = null; zoom(Math.exp(e.deltaY * .0012)); }, { passive: false });
-
-// ---------- loop ----------
-const tmp = new THREE.Vector3();
-function project(pos, el, dy = 0) {
-  tmp.copy(pos).project(camera);
-  if (tmp.z > 1 || tmp.z < -1) { el.style.visibility = 'hidden'; return; }
-  el.style.visibility = 'visible';
-  const x = (tmp.x * .5 + .5) * innerWidth, y = (-tmp.y * .5 + .5) * innerHeight;
-  el.style.transform = `translate(${(x - el.offsetWidth / 2) | 0}px, ${(y - el.offsetHeight + dy) | 0}px)`;
-}
-let last = performance.now(), clock0 = performance.now();
-function frame(now) {
-  const dt = Math.min(.05, (now - last) / 1000); last = now;
-  if (flight) {
-    const k = ease(Math.min(1, (now - flight.t0) / flight.dur)), f = flight.from, t = flight.to;
-    if (!flight.keep) cam.target.lerpVectors(f.target, t.target, k); cam.dist = f.dist + (t.dist - f.dist) * k; cam.pol = f.pol + (t.pol - f.pol) * k; cam.az = f.az + (t.az - f.az) * k;
-    if (k >= 1) flight = null;
-  }
-  flat += (1 - flat) * (reduce ? 1 : 1 - Math.exp(-dt * 4.5));
-  for (const o of TALL()) o.scale.y = flat;
-  const mk = 1 + (1 - flat) * Math.max(0, cam.dist / 70 - 1);
-  placeCamera(); scene.fog.near = cam.dist * .95; scene.fog.far = cam.dist * 2.5;
-
-  // route buses: those behind the breakdown queue up, those ahead run on and loop back to the gap's far end
-  const speed = reduce ? 0 : .006;
-  const behind = line.filter(b => b.t < GAP[0]).sort((a, b) => b.t - a.t);
-  behind.forEach((b, i) => { const limit = (state.phase === 'joined' ? 1 : GAP[0] - .035 - i * .045); b.t = Math.min(limit, b.t + speed * dt); });
-  line.filter(b => b.t >= GAP[0]).forEach(b => { b.t += speed * dt; if (b.t > 1) b.t = GAP[1]; });
-
-  if (state.phase === 'enroute') {
-    const r = RES[sel]; state.k = Math.min(1, state.k + (reduce ? 1 : dt * 30 / r.path.len));
-    if (state.k >= 1) { state.phase = 'joined'; r.bus.route = true; r.bus.t = GAP[0]; paint(r.bus, 'normal'); r.path.group.visible = false; setStep(3); $('t2').textContent = r.arrive; }
-  }
-  const SB = RES[sel].bus;
-  if (state.phase === 'joined' && SB.t < 1) {
-    SB.t += speed * 1.6 * dt;
-    if (SB.t > GAP[1]) { gapLine.visible = gapGlow.visible = false; if ($('t3').textContent === '—') { $('t3').textContent = RES[sel].closed; setStep(4); } }
-  }
-
-  for (const b of buses) {
-    let x, y, a;
-    if (b === SB && state.phase === 'enroute') { const qb = RES[sel].path.qb, p = qb(state.k), p2 = qb(Math.min(1, state.k + .02)); x = p[0]; y = p[1]; a = Math.atan2(p2[1] - p[1], p2[0] - p[0]); }
-    else if (b.route) { const p = at(b.t); x = p.x; y = p.y; a = p.a; }
-    else { [x, y] = b.free; a = b.freeA ?? -.6; }
-    const off = b.pull || 0, wx = W(x) - Math.sin(a) * off, wz = Z(y) + Math.cos(a) * off;
-    b.mesh.position.set(wx, .06, wz); b.mesh.rotation.y = -a; b.mesh.scale.setScalar(mk);
-    tmp.set(wx, b.lift * flat * Math.min(1, Math.max(.32, cam.dist / 175)), wz); project(tmp, b.el, -(1 - flat) * (12 + mk * 4));
-    if (b === SB && follow && !flight) cam.target.lerp(tmp.set(wx, 0, wz), 1 - Math.exp(-dt * 2.2));
-  }
-  for (const p of places) project(p.pos, p.el, 18);
-
-  rings.forEach((r, i) => {
-    const ph = reduce ? i / 3 : ((now / 1800) + i / 3) % 1;
-    const on = state.phase === 'alert';
-    r.scale.setScalar(1 + ph * 2.2); r.material.opacity = on ? (1 - ph) * .7 : (i === 0 ? .35 : 0);
-    if (!on) r.scale.setScalar(1.2);
-  });
-  const blink = reduce || (now % 900) < 520; broken.mesh.userData.hazard.forEach(h => h.visible = blink);
-  if (!reduce) { updateCars(dt); updateTrain(dt); }
-  if (state.phase === 'joined' && SB.t > GAP[1] + .06) follow = false;
-  const mins = Math.floor((now - clock0) / 60000);
-  $('clock').textContent = fmt(mins);
-
-  if (mode !== '2d') renderer.render(scene, camera);
-  requestAnimationFrame(frame);
-}
-function resize() { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); if (innerWidth < 640 && cam.dist > 200) cam.dist = 230; }
-addEventListener('resize', resize);
-// Icons exported from the Figma file (Misha Naer round/line pack + two drawn for this kit), fill = currentColor.
+(function () {
 const IC = {
 bus:'<path fill-rule="evenodd" clip-rule="evenodd" d="M18.5 2C19.2 2 20.0 2.3 20.6 2.8C21.1 3.4 21.5 4.2 21.5 5V6H22.5C22.7 6 23.0 6.1 23.2 6.2C23.3 6.4 23.5 6.7 23.5 7C23.5 7.2 23.3 7.5 23.2 7.7C23.0 7.8 22.7 8 22.5 8H21.5V17.5C21.5 18.2 21.2 18.8 20.7 19.4C20.3 19.9 19.6 20.3 19 20.4V21.5C19 21.7 18.8 22.0 18.7 22.2C18.5 22.3 18.2 22.5 18 22.5C17.7 22.5 17.4 22.3 17.2 22.2C17.1 22.0 17 21.7 17 21.5V20.5H7V21.5C7 21.7 6.8 22.0 6.7 22.2C6.5 22.3 6.2 22.5 6 22.5C5.7 22.5 5.4 22.3 5.2 22.2C5.1 22.0 5 21.7 5 21.5V20.4C4.3 20.3 3.6 19.9 3.2 19.4C2.7 18.8 2.5 18.2 2.5 17.5V8.5H1.5C1.2 8.5 0.9 8.3 0.7 8.2C0.6 8.0 0.5 7.7 0.5 7.5C0.5 7.2 0.6 6.9 0.7 6.7C0.9 6.6 1.2 6.5 1.5 6.5H2.5V5C2.5 4.2 2.8 3.4 3.3 2.8C3.9 2.3 4.7 2 5.5 2H18.5ZM4.5 17.5C4.5 17.7 4.6 18.0 4.7 18.2C4.9 18.3 5.2 18.5 5.5 18.5H18.5C18.7 18.5 19.0 18.3 19.2 18.2C19.3 18.0 19.5 17.7 19.5 17.5V12H4.5V17.5ZM7.5 14C7.8 14 8.2 14.1 8.5 14.4C8.8 14.7 9 15.1 9 15.5C9 15.8 8.8 16.2 8.5 16.5C8.2 16.8 7.8 17 7.5 17C7.1 17 6.7 16.8 6.4 16.5C6.1 16.2 6 15.8 6 15.5C6 15.1 6.1 14.7 6.4 14.4C6.7 14.1 7.1 14 7.5 14ZM16.5 14C16.8 14 17.2 14.1 17.5 14.4C17.8 14.7 18 15.1 18 15.5C18 15.8 17.8 16.2 17.5 16.5C17.2 16.8 16.8 17 16.5 17C16.1 17 15.7 16.8 15.4 16.5C15.1 16.2 15 15.8 15 15.5C15 15.1 15.1 14.7 15.4 14.4C15.7 14.1 16.1 14 16.5 14ZM5.5 4C5.2 4 4.9 4.1 4.7 4.2C4.6 4.4 4.5 4.7 4.5 5V10H19.5V5C19.5 4.7 19.3 4.4 19.2 4.2C19.0 4.1 18.7 4 18.5 4H5.5Z"/>',
 warning:'<path fill-rule="evenodd" clip-rule="evenodd" d="M8.5 4C10.0 1.3 13.9 1.3 15.4 4L22.3 16C23.9 18.6 22.0 22 18.9 22H5.0C1.9 22 0.0 18.6 1.6 16L8.5 4ZM13.7 5C12.9 3.6 11.0 3.6 10.2 5L3.3 17C2.5 18.3 3.5 20 5.0 20H18.9C20.4 20 21.4 18.3 20.6 17L13.7 5ZM12 14.5C12.3 14.5 12.7 14.6 13.0 14.9C13.3 15.2 13.5 15.6 13.5 16C13.5 16.3 13.3 16.7 13.0 17.0C12.7 17.3 12.3 17.5 12 17.5C11.6 17.5 11.2 17.3 10.9 17.0C10.6 16.7 10.5 16.3 10.5 16C10.5 15.6 10.6 15.2 10.9 14.9C11.2 14.6 11.6 14.5 12 14.5ZM12 8C12.2 8 12.5 8.1 12.7 8.2C12.8 8.4 13 8.7 13 9V11.5C13 11.7 12.8 12.0 12.7 12.2C12.5 12.3 12.2 12.5 12 12.5C11.7 12.5 11.4 12.3 11.2 12.2C11.1 12.0 11 11.7 11 11.5V9C11 8.7 11.1 8.4 11.2 8.2C11.4 8.1 11.7 8 12 8Z"/>',
@@ -1020,213 +240,271 @@ phone:'<path fill-rule="evenodd" clip-rule="evenodd" d="M15.3 2.3C15.6 2.0 15.9 
 busFront:'<path fill-rule="evenodd" clip-rule="evenodd" d="M7 2H17C17.7 2 18.5 2.3 19.1 2.8C19.6 3.4 20 4.2 20 5V16C20 16.5 19.7 17.0 19.4 17.4C19.0 17.7 18.5 18 18 18H6C5.4 18 4.9 17.7 4.5 17.4C4.2 17.0 4 16.5 4 16V5C4 4.2 4.3 3.4 4.8 2.8C5.4 2.3 6.2 2 7 2ZM7.5 4.5H16.5C16.7 4.5 17.0 4.6 17.2 4.7C17.3 4.9 17.5 5.2 17.5 5.5V10C17.5 10.2 17.3 10.5 17.2 10.7C17.0 10.8 16.7 11 16.5 11H7.5C7.2 11 6.9 10.8 6.7 10.7C6.6 10.5 6.5 10.2 6.5 10V5.5C6.5 5.2 6.6 4.9 6.7 4.7C6.9 4.6 7.2 4.5 7.5 4.5ZM8 13C7.6 13 7.3 13.1 7.1 13.3C6.8 13.6 6.7 13.9 6.7 14.2C6.7 14.5 6.8 14.8 7.1 15.1C7.3 15.3 7.6 15.5 8 15.5C8.3 15.5 8.6 15.3 8.8 15.1C9.1 14.8 9.2 14.5 9.2 14.2C9.2 13.9 9.1 13.6 8.8 13.3C8.6 13.1 8.3 13 8 13ZM16 13C15.6 13 15.3 13.1 15.1 13.3C14.8 13.6 14.7 13.9 14.7 14.2C14.7 14.5 14.8 14.8 15.1 15.1C15.3 15.3 15.6 15.5 16 15.5C16.3 15.5 16.6 15.3 16.8 15.1C17.1 14.8 17.2 14.5 17.2 14.2C17.2 13.9 17.1 13.6 16.8 13.3C16.6 13.1 16.3 13 16 13ZM6 18H9V20.5C9 20.7 8.8 21.0 8.7 21.2C8.5 21.3 8.2 21.5 8 21.5H7C6.7 21.5 6.4 21.3 6.2 21.2C6.1 21.0 6 20.7 6 20.5V18ZM15 18H18V20.5C18 20.7 17.8 21.0 17.7 21.2C17.5 21.3 17.2 21.5 17 21.5H16C15.7 21.5 15.4 21.3 15.2 21.2C15.1 21.0 15 20.7 15 20.5V18Z"/>',
 sound:'<path fill-rule="evenodd" clip-rule="evenodd" d="M4 10H6V14H4V10ZM8 7H10V17H8V7ZM12 4H14V20H12V4ZM16 8H18V16H16V8Z"/>',
 };
-const ic = (name, size, cls = '') => `<svg class="oi ${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${IC[name]}</svg>`;
-// charge ring: track + level arc (donut, inner radius 0.62 as in the Figma component)
-const ring = (pct, color, size = 14) => { const r = size * (1 + .62) / 4, sw = size * (1 - .62) / 2, c = 2 * Math.PI * r;
-  return `<svg class="oring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--state-selected)" stroke-width="${sw}"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-dasharray="${c * pct / 100} ${c}" transform="rotate(-90 ${size/2} ${size/2})"/></svg>`; };
+IC.depot = '<path fill-rule="evenodd" clip-rule="evenodd" d="M12 2.3 22 7.6V21H2V7.6L12 2.3ZM4 8.8V19H6V11H18V19H20V8.8L12 4.6 4 8.8ZM8 13V15H16V13H8ZM8 17V19H16V17H8Z"/>';
+IC.nav = '<path fill-rule="evenodd" clip-rule="evenodd" d="M21.7 2.3C22 2.6 22.1 3.1 21.9 3.5L14.4 21.4C14.2 21.8 13.8 22 13.4 22C13 22 12.6 21.7 12.5 21.3L10.6 13.4 2.7 11.5C2.3 11.4 2 11 2 10.6C2 10.2 2.2 9.8 2.6 9.6L20.5 2.1C20.9 1.9 21.4 2 21.7 2.3ZM6.4 10.3 11.6 11.6C12 11.7 12.3 12 12.4 12.4L13.7 17.6 19 5 6.4 10.3Z"/>';
+IC.sun = '<circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>';
+IC.filter = '<path d="M3 5h18l-7 8.5V20l-4-2v-4.5L3 5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>';
+const ic = (n, s = 18, c = '') => `<svg class="i ${c}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${IC[n]}</svg>`;
 
-// ---------- 2D · работа: the Figma dispatcher screens 00–03 as a live screen, sharing the scenario with 3D ----------
-// Positions, sizes and values are taken from the Figma frames (1440×900). The map is a 2× raster of the Figma map
-// component (like a tile layer); everything on top of it — markers, routes, panels, the ribbon — is live HTML/SVG.
-var OPS = null, curStep = 0;
-(function initOps() {
-  const root = document.getElementById('ops');
-  const stage = document.createElement('div'); stage.className = 'o-stage'; root.appendChild(stage);
-  OPS = { root, stage, view: '00', acked: false, introDone: false, entered: false };
-  const C = { fg: 'var(--text-fg)', delay: 'var(--status-delay)', res: 'var(--status-reserve)' };
-  // [num, status N|D|R|C, power D|E, x, y, charge%, chargeColor, dimIn02]
-  const BUS = [
-    ['4401','N','E',442,615,64,'fg'], ['4403','N','D',586,593], ['4405','D','E',676,575,41,'fg'],
-    ['4407','N','E',1036,351,22,'delay'], ['4409','N','D',1151,277], ['4410','N','E',1287,201,77,'fg'],
-    ['3112','N','E',610,326,70,'fg',1], ['3118','D','D',865,266,0,'',1], ['3121','N','D',1359,233,0,'',1],
-    ['7204','N','D',685,236,0,'',1], ['7209','D','D',731,640,0,'',1], ['1505','N','E',1089,543,58,'fg',1],
-    ['1511','D','D',1312,510,0,'',1], ['1502','N','D',1006,708,0,'',1],
-    ['4417','R','E',934,514,82,'res'], ['4502','R','E',987,628,18,'delay'], ['4380','R','D',1373,458],
-  ];
-  const HEADS = [[519,608,-73],[667,604,-95],[778,542,-53],[1105,330,-53],[1226,267,-69],[1350,176,-45]];
-  const RV = { // reserve-specific values, same numbers as screen 02 and edge case 5
-    '4417': { eta: 6, km: '2,4 км', arrive: '14:38', closed: '14:41', driver: 'Ковалёв А.', ring: [930, 510, 74], pill: [1012, 515], path: 'M 965.5 526 C 955.5 486 918 487 884 471' },
-    '4380': { eta: 11, km: '4,9 км', arrive: '14:43', closed: '14:46', driver: 'Миронова Е.', ring: [1369, 454, 75], pill: [1262, 459], path: 'M 1373 470 C 1230 500 990 492 884 471' },
-  };
-  const bus = (b, v) => {
-    const [n, s, p, x, y0, ch, cc, dim] = b; let y = y0, st = s;
-    if (n === '7204' && (v === '02' || v === '03')) y = 168;
-    const cls = { N: '', D: 'delay', R: 'res', C: 'crit' }[st];
-    const r = ch ? ring(ch, C[cc]) : '';
-    let inner;
-    if (st === 'D') inner = ic('stopwatch', 12) + n + '<span class="plus">+4</span>' + r;
-    else if (st === 'R') inner = (p === 'E' ? r : ic('repeat', 12)) + n;
-    else if (st === 'C') inner = ic('warning', 12) + n;
-    else inner = (p === 'E' ? r : ic('busFront', 12)) + n;
-    const op = dim && (v === '02' || v === '03') ? ' style="opacity:.35;left:' + x + 'px;top:' + y + 'px"' : ` style="left:${x}px;top:${y}px"`;
-    const res = st === 'R', off = n === '4502';
-    return `<${res ? 'button' : 'div'} class="o-bus ${cls}${off ? ' off' : ''}" data-bus="${n}"${op}${res && !off ? ` aria-label="Резерв ${n}"` : ''}><i class="ld" style="width:${st === 'D' ? 50 : 38}px"></i>${inner}</${res ? 'button' : 'div'}>`;
-  };
-  const head = ([x, y, r]) => `<svg class="o-head" style="left:${x}px;top:${y}px;transform-origin:0 0;transform:rotate(${-r}deg)" viewBox="-1 -1 13 13"><path d="M5.5 0 L11 11 L0 11 Z" fill="var(--text-fg)" stroke="var(--bg-map)" stroke-width="2" stroke-linejoin="round"/></svg>`;
-  const badge = (k, t, i) => `<span class="o-badge ${k}">${k === 'ok' ? '<i></i>' : ic(i, 12)}${t}</span>`;
-  const seg = () => `<div class="seg" role="group" aria-label="Режим карты"><button data-m="2d" aria-pressed="true">2D · работа</button><button data-m="3d" aria-pressed="false">3D · обзор</button></div>`;
+// ---------- data: one shift on route 10, the same numbers as the Figma screens ----------
+const PLATE = { 401: 'Е 401 АР', 403: 'Е 403 АР', 405: 'В 405 КО', 407: 'В 407 КО', 409: 'М 409 ТС', 410: 'М 410 ТС', 412: 'В 412 КО', 417: 'В 417 КО', 380: 'Р 380 СК', 502: 'В 502 КО' };
+const START = { 410: '13:40', 409: '13:46', 407: '13:52', 405: '13:58', 412: '14:04', 403: '14:10', 401: '14:16' };
+const tmin = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
+const hhmm = n => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`;
+const LAP = 54;
+const POS = {
+  normal: { 401: .22, 403: .33, 412: .44, 405: .48, 407: .67, 409: .78, 410: .89 },
+  review: { 401: .25, 403: .37, 417: .49, 405: .61, 407: .73, 409: .85 },
+  after:  { 401: .30, 403: .41, 412: .46, 405: .55, 407: .74, 409: .85, 410: .96 },
+};
+const RESV = {
+  417: { tag: 'Готов', from: 'Депо «Северное» · 82%', km: '2,4', min: 6, why: 'Почему В 417 КО: быстрее всех, заряда хватит на 3 круга, смена водителя до 22:00' },
+  380: { tag: 'Готов', from: '«Парковая» · дизель', km: '4,9', min: 11, why: 'Р 380 СК: дизель, на 5 мин дольше, смена водителя до 20:00' },
+  502: { tag: 'Не готов', from: 'Заряд 18%', km: '3,1', min: 7, off: true },
+};
+const ROUTES = [
+  [10, 'Вокзал — Северная', 7], [3, 'Вокзал — Парковая', 6, 'Опоздание до 7 мин'], [7, 'Рынок — Университет', 5, 'Опоздание до 7 мин'],
+  [15, 'Пл. Мира — Северная', 5, 'Опоздание до 7 мин'], [2, 'Рынок — Парковая', 4], [6, 'Университет — Депо «Северное»', 4],
+  [21, 'Вокзал — Пл. Мира', 4], [33, 'Северная — Парковая', 3],
+];
+const LOG = [
+  [1, '14:29', 'crit', 'Поломка В 412 КО у «Пл. Мира»', 'Телеметрия: остановка двигателя. Сигнал диспетчеру пришёл сам.'],
+  [1, '14:29', 'delay', 'Интервал вырос до 10 мин', 'Е 403 АР → В 405 КО: 8 мин, В 405 КО → В 407 КО: 10 мин. План 6.'],
+  [2, '14:32', 'res', 'Назначен резерв {R}', 'Рекомендация {how} · 3 мин от сигнала.'],
+  [3, '14:33', 'res', 'Водитель {R} принял', 'Ответ через 40 с.'],
+  [4, '{ARR}', 'ok', '{R} на маршруте', 'Встал между Е 403 АР и В 405 КО, пассажиры В 412 КО пересели.'],
+  [4, '14:45', 'mut', 'В 412 КО уехал на эвакуаторе', 'Заявка в техслужбу ушла вместе с аварией.'],
+  [4, '14:52', 'ok', 'Интервалы выровнены', 'Отклонения на №10 не больше 2 мин. Авария закрыта.'],
+];
 
-  function topBar(v) {
-    const res = v === '03' ? '2 в резерве' : '3 в резерве';
-    return `<div class="o-panel o-top"><div><div class="o-t14">Диспетчерская · Северный район</div><div class="o-c12 o-mut">Смена 2 · диспетчер Петрова О.</div></div>
-      <div class="o-badges">${badge('ok', '38 на линии')}${badge('delay', '4 опаздывают', 'stopwatch')}${v === '00' ? '' : badge('crit', '1 авария', 'warning')}${badge('res', res, 'repeat')}</div>
-      <div class="o-right">${seg()}<button class="ib" data-act="theme" aria-label="Переключить тему"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <span style="color:var(--text-fg)">${ic('search', 16)}</span><span style="color:var(--text-fg)">${ic('layers', 16)}</span><span class="o-t16">${v === '00' ? '14:28' : '14:32'}</span></div></div>`;
+// ---------- state ----------
+// step: 0 normal 14:28 · 1 incident 14:32 · 2 assigned, waiting for the driver · 3 driver accepted · 4 review 15:05
+const S = { step: 0, res: '417', tab: 'trips', phone: false, t0: Date.now() };
+const arrive = () => hhmm(tmin('14:32') + RESV[S.res].min);
+
+// ---------- route geometry (Figma crop coords + map offset 407,-40) ----------
+const Q = [[113,569],[559,317],[624,328],[869,392],[905,216],[923,144],[941,68],[944,-40]].map(([x, y]) => [x + 407, y - 40]);
+const CUM = [0]; for (let i = 1; i < Q.length; i++) CUM.push(CUM[i - 1] + Math.hypot(Q[i][0] - Q[i-1][0], Q[i][1] - Q[i-1][1]));
+const L = CUM[CUM.length - 1];
+const atD = d => { for (let i = 1; i < Q.length; i++) if (d <= CUM[i]) { const t = (d - CUM[i-1]) / (CUM[i] - CUM[i-1]); return [Q[i-1][0] + t * (Q[i][0] - Q[i-1][0]), Q[i-1][1] + t * (Q[i][1] - Q[i-1][1])]; } return Q[Q.length - 1]; };
+const D = p => 440 + (p - .2) / .8 * (L - 440);
+const pt = p => atD(D(p));
+const sub = (a, b) => { const d0 = D(a), d1 = D(b), out = [atD(d0)]; for (let i = 1; i < Q.length; i++) if (CUM[i] > d0 && CUM[i] < d1) out.push(Q[i]); out.push(atD(d1)); return out; };
+const path = pts => pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+const CRASH = pt(.46), DEP = [1215, 379];
+
+// ---------- render ----------
+const stage = document.getElementById('stage');
+const timer = () => { const s = 192 + Math.floor((Date.now() - S.t0) / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+const clock = () => ['14:28', '14:32', '14:32', '14:33', '15:05'][S.step];
+
+function rail() {
+  return `<nav class="pnl rail" aria-label="Разделы"><div class="logo">${ic('busFront', 22)}</div>
+    <button class="ri on" aria-label="Смена">${ic('bus', 20)}</button>
+    <button class="ri" aria-label="Инциденты">${ic('warning', 20)}${S.step === 1 ? '<span class="badge">1</span>' : ''}</button>
+    <button class="ri" aria-label="Депо">${ic('depot', 20)}</button>
+    <button class="ri" aria-label="Слои">${ic('layers', 20)}</button>
+    <span class="sp"></span><button class="ri" data-act="theme" aria-label="Переключить тему">${ic('sun', 20)}</button></nav>`;
+}
+function topBlock() {
+  const R = PLATE[S.res];
+  if (S.step === 0) return `<div class="blk kpi"><div><div class="v">94%</div><div class="t13 mut">рейсов в графике</div></div>
+    <svg width="120" height="34" viewBox="0 0 120 34" aria-hidden="true"><path d="M2 30 L18 26 L30 22 L44 25 L58 15 L72 12 L86 14 L100 8 L116 5" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="116" cy="5" r="3" fill="var(--acc)"/></svg></div>`;
+  if (S.step === 1) return `<div class="blk crit" role="alert"><div class="h">${ic('warning', 18)}Ждёт решения<span class="r" id="tmr">${timer()}</span></div><div class="t13">№10 · В 412 КО сломался у «Пл. Мира». Без замены интервал до 10 мин.</div></div>`;
+  if (S.step < 4) return `<div class="blk res"><div class="h">${ic('nav', 18)}Замена в пути<span class="r">${RESV[S.res].min} мин</span></div><div class="t13">${R} едет к «Пл. Мира», прибытие ${arrive()}. ${S.step === 3 ? 'Водитель принял в 14:33.' : 'Пассажирам В 412 КО отправлена пересадка.'}</div></div>`;
+  return `<div class="blk ok"><div class="h">${ic('check', 18)}Авария закрыта<span class="r">23 мин</span></div><div class="t13">Интервалы на №10 выровнены к 14:52. Разбор — во вкладке «Журнал».</div></div>`;
+}
+function routes() {
+  const sub10 = [['В 405 и В 412 идут парой', 'var(--delay)'], ['Авария · интервал до 10 мин', 'var(--crit)'], [`Замена в пути · ${RESV[S.res].min} мин`, 'var(--res)'], ['Замена в пути · водитель принял', 'var(--res)'], ['Интервал в норме', 'var(--muted)']][S.step];
+  const rows = ROUTES.map(([n, name, k, late]) => {
+    const s = n === 10 ? `<div class="s" style="color:${sub10[1]}">${sub10[0]}</div>` : late ? `<div class="s"><i class="dot"></i>${late}</div>` : `<div class="s">Интервал в норме</div>`;
+    return `<div class="rrow${n === 10 ? ' on' : ''}"><span class="num">${n}</span><div class="rtx"><div class="t15">${name}</div>${s}</div><span class="cnt">${k}</span></div>`;
+  }).join('');
+  return `<section class="pnl routes" aria-label="Маршруты района"><div class="rhead"><div class="rtitle"><h1>Северный район</h1><span class="t15 m mut">${clock()}</span></div>${topBlock()}
+    <div class="srch"><div class="inp">${ic('search', 18)}Маршрут, госномер</div><span class="ib">${ic('filter', 18)}</span></div></div>
+    <div class="tabs"><span class="tab">Все</span><span class="tab on">С отклонением · 4</span><span class="tab">Резерв · 3</span></div>
+    <div class="thead caps"><span>Маршрут</span><span>На линии</span></div>${rows}</section>`;
+}
+function ribbon() {
+  if (S.step === 4) return `<div class="rib"><div class="t13 m mut">Разбор аварии · 14:29–14:52</div><div class="sumrow">
+    <div class="sumc"><div class="v">3 мин</div><div class="t12 mut">от сигнала до решения</div></div>
+    <div class="sumc"><div class="v" style="color:var(--crit)">10 мин</div><div class="t12 mut">максимальный разрыв</div></div>
+    <div class="sumc"><div class="v">23 мин</div><div class="t12 mut">до нормы интервалов</div></div></div></div>`;
+  const W = 476, pos = S.step === 0 ? POS.normal : POS.after, inc = S.step > 0;
+  const kind = n => inc && n === '412' ? 'crit' : n === '405' ? 'delay' : '';
+  const segs = inc ? [[.41, .55, 'var(--crit)'], [.55, .74, 'var(--delay)']] : [[.44, .48, 'var(--delay)'], [.48, .67, 'var(--delay)']];
+  const ids = Object.keys(pos).sort((a, b) => pos[a] - pos[b]);
+  let right = -99, chips = '', leads = '', dots = '';
+  for (const n of ids) {
+    const cx = pos[n] * W, w = 36, x = Math.min(Math.max(cx - w / 2, right + 6), W - w); right = x + w; const k = kind(n);
+    chips += `<span class="chipn ${k}" style="left:${x}px">${n}</span>`;
+    leads += `<path d="M${x + w / 2} 22 L${cx} 33" stroke="${k ? `var(--${k})` : 'var(--line2)'}" stroke-width="1" fill="none"/>`;
+    dots += `<circle cx="${cx}" cy="36" r="4" fill="${k ? `var(--${k})` : 'var(--fg)'}" stroke="var(--s1)" stroke-width="1.5"/>`;
   }
-  const delayRow = `<button class="o-row" data-act="noop"><span class="o-tile delay">${ic('stopwatch', 16)}</span><span class="o-txt"><b>Опоздания · 4 борта</b><span>Маршруты 3, 7, 10, 15 · +4…+7 мин</span></span><span class="o-rt">1 мин${ic('chevron', 12)}</span></button>`;
-  function incidents(v, enter) {
-    const alert = v === '00' ? '' : `<div class="o-row alert${OPS.acked ? '' : ' blink'}${enter ? ' enter' : ''}" data-act="open" role="button" tabindex="0"><span class="o-tile crit">${ic('warning', 16)}</span><span class="o-txt"><b>Поломка · Маршрут №10</b><span>Борт 4412 · Пл. Мира · стоит 3 мин</span>
-      <span class="o-acts"><button class="o-btn sm" data-act="open">${ic('check', 14)}Открыть замену</button><span class="o-snd">${ic('sound', 14)}Звук</span></span></span><span class="o-rt"><span class="new">новое</span>${ic('chevron', 12)}</span></div>`;
-    return `<div class="o-panel o-inc"><div style="display:flex;gap:8px;align-items:center"><span class="o-t16">Инциденты</span><span class="o-c12 o-mut">${v === '00' ? '1 требует решения' : '2 требуют решения'}</span></div>
-      ${alert}${delayRow}<div class="o-div"></div><div class="o-res">${ic('check', 14)}Решено за смену: 4</div></div>`;
-  }
-  function summary(v) {
-    if (v !== '00') return `<div class="o-panel o-sum col" style="top:373px"><span class="o-t14">Сводка смены</span><span class="o-c12 o-mut" style="flex:1">в графике 92% · 2 разряжены</span><span class="o-mut">${ic('chevron', 12)}</span></div>`;
-    const op = [.47, .68, .79, .62, .49, .45, .49, .55, .57], pct = [82, 77, 71, 68, 64, 60, 58, 55, 49, 45, 41, 36, 22, 18];
-    return `<div class="o-panel o-sum" style="top:257px"><div style="display:flex;justify-content:space-between"><span class="o-t14">Сводка смены</span><span class="o-c12 o-mut">06:00 — 14:28</span></div>
-      <div style="display:flex;flex-direction:column;gap:6px"><div class="o-kv"><span class="o-t16">94%</span><span class="o-c12 o-mut">рейсов в графике ±3 мин</span></div>
-        <div class="o-spark"><svg width="328" height="54" style="position:absolute;left:0;top:0;overflow:visible"><defs><linearGradient id="oarea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--text-fg)" stop-opacity=".1"/><stop offset="1" stop-color="var(--text-fg)" stop-opacity="0"/></linearGradient></defs>
-          <g transform="translate(0 11.92)"><path d="M 0 4.8 C 6.8 4.0 27.3 0.4 41 0.0 C 54.6 -0.3 68.3 0.8 82 2.4 C 95.6 4.0 109.3 7.2 123 9.6 C 136.6 12.0 150.3 16.4 164 16.8 C 177.6 17.2 191.3 14.0 205 12.0 C 218.6 10.0 232.3 6.8 246 4.8 C 259.6 2.8 273.3 0.4 287 0.0 C 300.6 -0.3 321.1 2.0 328 2.4 L 328 24.0 L 0 24.0 Z" fill="url(#oarea)"/>
-          <path d="M 0 4.8 C 6.8 4.0 27.3 0.4 41 0.0 C 54.6 -0.3 68.3 0.8 82 2.4 C 95.6 4.0 109.3 7.2 123 9.6 C 136.6 12.0 150.3 16.4 164 16.8 C 177.6 17.2 191.3 14.0 205 12.0 C 218.6 10.0 232.3 6.8 246 4.8 C 259.6 2.8 273.3 0.4 287 0.0 C 300.6 -0.3 321.1 2.0 328 2.4" fill="none" stroke="var(--text-fg)" stroke-width="1.5"/></g>
-          <line x1="0" x2="328" y1="36.5" y2="36.5" stroke="var(--border-subtle)"/><circle cx="328" cy="14.4" r="3.5" fill="var(--text-fg)"/></svg>
-          <span class="o-c12 o-mut o-abs" style="left:0;top:40px">06</span><span class="o-c12 o-mut o-abs" style="left:147px;top:40px">10</span><span class="o-c12 o-mut o-abs" style="left:296px;top:40px">14:28</span></div></div>
-      <div style="display:flex;flex-direction:column;gap:8px"><div class="o-kv"><span class="o-t16">14</span><span class="o-c12 o-mut">электробусов · 2 ниже 30%</span></div>
-        <div class="o-rings">${pct.map(p => ring(p, p < 30 ? C.delay : C.fg)).join('')}</div></div>
-      <div style="display:flex;flex-direction:column;gap:6px"><div class="o-kv"><span class="o-t16">86%</span><span class="o-c12 o-mut">пик заполненности · 08–09</span></div>
-        <div class="o-heat">${op.map((o, i) => `<i style="left:${(i * 36.33).toFixed(2)}px;opacity:${o}"></i>`).join('')}<span class="o-c12 o-mut o-abs" style="left:0;top:14px">06</span><span class="o-c12 o-mut o-abs" style="left:110px;top:14px">09</span><span class="o-c12 o-mut o-abs" style="left:221px;top:14px">12</span><span class="o-c12 o-mut o-abs" style="left:294px;top:14px">14</span></div></div></div>`;
-  }
-  const legend = () => `<div class="o-panel o-leg"><span class="o-t14">Как читать маркер</span>
-    <div class="r"><span class="o-bus" style="position:relative"><i class="ld" style="width:38px"></i>${ic('busFront', 12)}4401</span>Заливка — заполненность салона</div>
-    <div class="r"><span class="o-bus" style="position:relative"><i class="ld" style="width:38px"></i>${ring(64, C.fg)}4401</span>Кольцо — заряд электробуса</div>
-    <div class="r"><span class="o-bus" style="position:relative"><i class="ld" style="width:38px"></i>${ring(22, C.delay)}4401</span>Янтарное кольцо — заряд ниже 30%</div>
-    <div class="r"><span style="width:62px;display:grid;place-items:center"><svg width="11" height="11" viewBox="-1 -1 13 13" style="transform:rotate(90deg)"><path d="M5.5 0 L11 11 L0 11 Z" fill="var(--text-fg)"/></svg></span>Стрелка — направление движения</div></div>`;
-  function ribbon(v) {
-    const STOPS = [20, 118.4, 216.8, 315.2, 413.6, 512, 610.4, 708.8, 807.2, 905.6, 1004];
-    const gapCol = v === '03' ? 'var(--status-reserve)' : 'var(--status-critical)', gapSoft = v === '03' ? 'var(--status-reserve-soft)' : 'var(--status-critical-soft)';
-    const crit = v !== '00';
-    const num = (x, t, extra = '') => `<span class="num" style="left:${x}px">${extra}${t}</span>`;
-    const stem = (x, c = 'var(--text-muted)') => `<i class="stem" style="left:${x}px;background:${c}"></i>`;
-    return `<div class="o-panel o-rib${v === '03' ? ' fixing' : ''}">
-      <span class="p o-t14" style="left:15px;top:11px">Маршрут №10 · лента интервалов</span>
-      <span class="p o-c12 o-mut" style="left:15px;top:33px;white-space:pre">План 6 мин  ·  сейчас ${crit ? '6–14' : '6–7'} мин  ·  7 бортов на линии</span>
-      <span class="p o-c12 o-mut" style="left:808px;top:13px">Шкала: от «Вокзала» к «Северной»</span>
-      <i class="p" style="left:23px;top:116px;width:984px;height:2px;background:var(--surface-4)"></i>
-      ${crit ? `<i class="p" style="left:465.8px;top:108px;width:167.28px;height:18px;border-radius:4px;background:${gapSoft}"></i><i class="p" style="left:465.8px;top:116px;width:167.28px;height:2px;background:${gapCol}"></i>` : ''}
-      ${STOPS.map((x, i) => `<i class="stop${crit && (i === 5 || i === 6) ? ' g' : ''}" style="left:${x}px"></i>`).join('')}
-      ${[['Вокзал', 7], ['Рынок', 200.8], ['Пл. Мира', 389.1], ['Ул. Ленина', 580.9], ['Университет', 772.7], ['Северная', 965]].map(([t, x]) => `<span class="p o-c12 o-mut" style="left:${x}px;top:131px">${t}</span>`).join('')}
-      ${num(30, '4401')}${stem(62.36)}${num(158, '4403')}${stem(190.28)}
-      <span class="num" style="left:277px"><span style="color:var(--status-delay)">${ic('stopwatch', 12)}</span>4405<span style="font-weight:400;font-size:12px;color:var(--status-delay)">+4</span></span>${stem(328.04, 'var(--status-delay)')}
-      ${crit ? `<span class="o-bus crit" style="left:435px;top:77px">${ic('warning', 12)}4412</span>${stem(465.8, 'var(--status-critical)')}` : num(435, '4412') + stem(465.8)}
-      ${num(620, '4407')}${stem(652.76)}${num(739, '4409')}${stem(770.84)}${num(877, '4410')}${stem(908.6)}
-      <span class="p o-c12 o-mut" style="left:110px;top:87px">6 мин</span><span class="p o-c12 o-mut" style="left:234px;top:87px">7 мин</span><span class="p o-c12 o-mut" style="left:391px;top:87px">6 мин</span>
-      ${crit ? `<span class="p o-c12" style="left:${v === '03' ? 426 : 424.94}px;top:153px;color:${gapCol}">${v === '03' ? `${sel} закроет разрыв в ${RV[sel].arrive} · интервал вернётся к 7 мин` : 'Разрыв 14 мин · 2 остановки без автобуса'}</span>` : ''}</div>`;
-  }
-  function mapLayer(v) {
-    const r = RV[sel], crit = v !== '00';
-    let svg = `<svg class="o-svg" viewBox="0 0 1440 900"><defs><radialGradient id="oglow"><stop offset="0" stop-color="#ff4d3d" stop-opacity=".28"/><stop offset="1" stop-color="#ff4d3d" stop-opacity="0"/></radialGradient></defs>`;
-    if (crit) {
-      const gc = v === '03' ? 'var(--status-reserve)' : 'var(--status-critical)', gp = 'M 877.6 456.5 L 899.9 431.9 L 1039.9 383.9 L 1050.2 376.4';
-      svg += `<path d="${gp}" fill="none" stroke="${gc}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity=".22"/><path d="${gp}" fill="none" stroke="${gc}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`;
-      svg += `<circle cx="877.6" cy="456.6" r="60" fill="url(#oglow)" opacity="${v === '03' ? .5 : 1}"/>`;
-      if (v === '01') svg += [34, 56, 80].map((rr, i) => `<circle class="o-pulse" style="animation-delay:${i * .8}s" cx="877.6" cy="456.6" r="${rr}" fill="none" stroke="var(--status-critical)" stroke-width="1.5"/>`).join('');
-      else svg += `<circle cx="877.6" cy="456.6" r="34" fill="none" stroke="var(--status-critical)" stroke-width="1.5" opacity=".5"/>`;
-      if (v === '02') svg += `<path d="${r.path}" fill="none" stroke="var(--status-reserve)" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 5"/>`;
-      if (v === '03') svg += `<path d="${r.path}" fill="none" stroke="var(--status-reserve)" stroke-width="2" stroke-linecap="round"/>`;
-      svg += `<rect x="878" y="403" width="2" height="56" fill="var(--status-critical)"/><circle cx="879" cy="457" r="5" fill="var(--status-critical)" stroke="var(--bg-map)" stroke-width="2"/>`;
+  const base = `<rect x="0" y="34" width="${W}" height="4" rx="2" fill="var(--s3)"/><rect x="${pos[ids[0]] * W}" y="34" width="${(pos[ids[ids.length - 1]] - pos[ids[0]]) * W}" height="4" fill="var(--route)"/>`;
+  const sg = segs.map(([a, b, c]) => `<rect x="${a * W}" y="34" width="${(b - a) * W}" height="4" fill="${c}"/>`).join('');
+  const labs = inc ? `${S.step === 1 ? `<span class="gapl" style="left:${.48 * W}px;color:var(--crit)">8 мин</span>` : `<span class="chipn res" style="left:${.46 * W - 52}px">${S.res} · ${RESV[S.res].min} мин</span>`}<span class="gapl" style="left:${.645 * W}px;color:var(--delay)">10 мин</span>`
+    : `<span class="gapl" style="left:${.455 * W}px;color:var(--delay)">2 мин</span><span class="gapl" style="left:${.575 * W}px;color:var(--delay)">10 мин</span>`;
+  return `<div class="rib"><div class="ribh"><span class="t14 b">Интервалы на линии</span><span class="t13 mut">Вокзал → Северная</span></div>
+    <div class="ribb"><svg width="${W}" height="66" style="position:absolute;left:0;top:0;overflow:visible" aria-hidden="true">${base}${sg}${leads}${dots}</svg>${chips}${labs}</div></div>`;
+}
+function tripRows() {
+  const now = tmin(S.step === 0 ? '14:28' : '14:32'), inc = S.step > 0;
+  const order = inc ? ['412', '405', '410', '409', '407', '403', '401'] : ['405', '410', '409', '407', '412', '403', '401'];
+  return order.map(n => {
+    const st = tmin(START[n]), el = now - st, end = hhmm(st + LAP);
+    let cls = '', bar = '', dev = '0', devc = '', endT = end;
+    const late = n === '405';
+    if (inc && n === '412') {
+      cls = S.step === 1 ? 'crit' : 'resv'; endT = '—';
+      bar = `<div class="bar crit"><i class="tk"></i><span class="ch" style="left:0">${S.step === 1 ? 'стоит 3 мин' : 'ждёт замену'}</span></div>`;
+      dev = S.step === 1 ? '+3 мин' : '→ ' + arrive(); devc = S.step === 1 ? 'crit' : 'res';
+    } else {
+      const w = Math.round(el / LAP * 168), cw = el >= 10 ? 52 : 46, x = Math.max(0, Math.min(168 - cw, w - cw + 2));
+      bar = `<div class="bar${late ? ' delay' : ''}"><i class="tk"></i><i class="fl" style="width:${w}px"></i><span class="ch" style="left:${x}px">${el} мин</span></div>`;
+      if (late) { dev = '+4 мин'; devc = 'delay'; }
+      if (!inc && late) cls = 'on';
     }
-    svg += '</svg>';
-    const buses = BUS.map(b => bus(b, v)).join('') + (crit ? bus(['4412', 'C', 'D', 847, 379], v).replace('class="o-bus crit"', 'class="o-bus crit clk" data-act="open" role="button" tabindex="0"') : bus(['4412', 'N', 'D', 847, 445], v));
-    let extra = HEADS.map(head).join('') + (crit ? '' : head([906, 420, -42]));
-    if (v === '02' || v === '03') {
-      const [rx, ry, rw] = r.ring, [px, py] = r.pill;
-      extra += `<i class="o-sel" style="left:${rx}px;top:${ry}px;width:${rw}px;height:32px"></i><span class="o-eta" style="left:${px}px;top:${py}px">${v === '02' ? `${r.eta} мин · ${r.km}` : `в пути · ${r.eta} мин`}</span>`;
-    }
-    return `<div class="o-map"></div><div class="o-scrim"></div>${svg}${extra}${buses}`;
+    return `<div class="tr ${cls}"><span><span class="plate">${PLATE[n]}</span></span><span>${START[n]}</span>${bar}<span>${endT}</span><span class="dev ${devc}">${dev}</span></div>`;
+  }).join('');
+}
+function logRows() {
+  const R = PLATE[S.res], items = LOG.filter(e => e[0] <= S.step);
+  if (!items.length) return `<div class="empty">За последний час событий по маршруту №10 нет. За смену решено 4 инцидента.</div>`;
+  const col = { crit: 'var(--crit)', delay: 'var(--delay)', res: 'var(--res)', ok: 'var(--acc)', mut: 'var(--muted)' };
+  return items.map(([, t, c, h, s]) => `<div class="log"><time>${t.replace('{ARR}', arrive())}</time><i class="d" style="background:${col[c]}"></i><div><b>${h.replace('{R}', R)}</b><div class="t13 mut">${s.replace('{how}', S.res === '417' ? 'принята без изменений' : 'изменена диспетчером').replace('{R}', R)}</div></div></div>`).join('');
+}
+function trips() {
+  const t = S.tab;
+  return `<section class="pnl trips" aria-label="Маршрут №10"><div class="thd"><h2>Маршрут №10</h2><div class="t13 mut">Вокзал — Северная · 7 бортов · ООО «Северный электротранс» · план 6 мин</div></div>${ribbon()}
+    <div class="tabs ttabs"><button class="tab${t === 'trips' ? ' on' : ''}" data-tab="trips">Рейсы</button><span class="tab">Список ТС</span><span class="tab">Расписание</span><button class="tab${t === 'log' ? ' on' : ''}" data-tab="log">Журнал</button></div>
+    <div class="tbl">${t === 'trips' ? `<div class="trh caps"><span>Госномер</span><span>Начало</span><span style="text-align:center">В пути</span><span>Конец</span><span>Откл.</span></div>${tripRows()}` : logRows()}</div></section>`;
+}
+function overlay() {
+  const p = S.step === 0 ? POS.normal : S.step === 4 ? POS.review : POS.after, inc = S.step > 0 && S.step < 4;
+  let svg = `<path d="${path(Q)}" stroke="var(--route)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if (inc) svg += `<path d="${path(sub(.41, .55))}" stroke="var(--crit)" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+  for (const s of [.30, .36, .46, .55, .62, .71, .80, .88, .95]) { const [x, y] = pt(s); svg += `<circle cx="${x}" cy="${y}" r="5" fill="var(--s1)" stroke="${inc && s >= .41 && s <= .55 ? 'var(--crit)' : 'var(--route)'}" stroke-width="2.5"/>`; }
+  if (S.step === 2 || S.step === 3) { const a = [DEP[0] + 12, DEP[1] + 12], c = CRASH; svg += `<path d="M${a[0]} ${a[1]} Q ${a[0] - 10} ${c[1] + 10} ${c[0] + 6} ${c[1] + 4}" stroke="var(--res)" stroke-width="2" fill="none" stroke-dasharray="${S.step === 2 ? '5 5' : '0'}"/>`; }
+  let html = `<svg class="ov" viewBox="0 0 1440 900" aria-hidden="true">${svg}</svg>`;
+  const lab = (q, s, dx, dy, center) => { const [x, y] = pt(q); return `<span class="slab" style="left:${x + dx}px;top:${y + dy}px${center ? ';transform:translateX(-50%)' : ''}">${s}</span>`; };
+  html += lab(.36, 'Рынок', -60, 6) + (inc ? '' : lab(.46, 'Площадь Мира', -40, 12)) + lab(.62, 'Ул. Ленина', 12, 6);
+  if (inc) html += `<span class="ack" style="left:${CRASH[0]}px;top:${CRASH[1]}px"></span>${S.step === 1 ? `<span class="ring" style="left:${CRASH[0]}px;top:${CRASH[1]}px"></span><span class="ring b" style="left:${CRASH[0]}px;top:${CRASH[1]}px"></span>` : ''}<span class="pin" style="left:${CRASH[0]}px;top:${CRASH[1] - 46}px">${ic('warning', 13)}412</span><svg class="ov"><path d="M${CRASH[0]} ${CRASH[1] - 46} V ${CRASH[1]}" stroke="var(--crit)" stroke-width="2"/><circle cx="${CRASH[0]}" cy="${CRASH[1]}" r="6" fill="var(--crit)" stroke="var(--s1)" stroke-width="2"/></svg>`;
+  // route buses alternate above / below the line
+  const ids = Object.keys(p).sort((a, b) => p[a] - p[b]); let up = true;
+  for (const n of ids) { if (inc && n === '412') continue; const [x, y] = pt(p[n]); const late = n === '405' && S.step < 4;
+    html += `<span class="mk${late ? ' delay' : ''}" style="left:${x}px;top:${up ? y - 32 : y + 8}px;transform:translateX(-50%)">${ic(late ? 'stopwatch' : 'bus', 13)}${n}${late ? '<span class="x">+4</span>' : ''}</span>`; up = !up; }
+  if (inc) { /* 412 hidden under the pin */ }
+  const other = [['204', 1067, 140], ['380', 1259, 500]];
+  for (const [n, x, y, late] of other) html += `<span class="mk${n === '380' ? ' res' : ' dim'}${late ? ' delay' : ''}${n === '380' && S.step === 1 && S.res === '380' ? ' sel' : ''}" style="left:${x}px;top:${y}px"${n === '380' ? ' data-pick="380"' : ''}>${ic(late ? 'stopwatch' : n === '380' ? 'repeat' : 'bus', 13)}${n}${late ? '<span class="x">+4</span>' : ''}</span>`;
+  // reserve 417 drives towards the crash after the driver accepts
+  let r417 = DEP; if (S.step === 3) r417 = [DEP[0] - 26, DEP[1] - 34];
+  if (S.step < 4) html += `<span class="mk res${S.step >= 1 && S.res === '417' ? ' sel' : ''}" style="left:${r417[0]}px;top:${r417[1]}px" data-pick="417">${ic('repeat', 13)}417</span>`;
+  html += `<span class="mk res" style="left:1295px;top:383px;opacity:.6">${ic('batteryLow', 13)}502</span>`;
+  if (S.step < 4) html += `<span class="depot" style="left:${DEP[0] - 148}px;top:${DEP[1] - 4}px"><b>Депо «Северное»</b><div class="t11 mut">2 резерва на выходе</div></span>`;
+  if (S.step === 2 || S.step === 3) html += `<span class="eta" style="left:${DEP[0] + 64}px;top:${DEP[1] + 1}px">в пути · ${S.step === 3 ? RESV[S.res].min - 1 : RESV[S.res].min} мин</span>`;
+  return html;
+}
+function progress(start, end, at, chip, kind) {
+  const N = 10; let h = '<i></i><i class="f" style="width:' + (at / (N - 1) * 100) + '%"></i>';
+  for (let k = 0; k < N; k++) h += `<b class="${k > at ? 'n' : ''}" style="left:${k / (N - 1) * 100}%"></b>`;
+  h += `<em class="${kind}" style="left:${(at + .5) / (N - 1) * 100}%">${chip}</em>`;
+  return `<div class="prog"><span>${start}</span><div class="ln">${h}</div><span>${end}</span></div><div class="ends"><span>Вокзал</span><span>Северная</span></div>`;
+}
+function card() {
+  const R = PLATE[S.res];
+  if (S.step === 0) return `<div class="chd"><span class="t">Электробус</span><span class="pill">В 405 КО</span><span class="r">64% ${ic('batteryCharging', 16)} 38 ${ic('busFront', 16)}</span></div>
+    ${progress('13:58', '14:52', 3, '+4 мин', 'delay')}
+    <div class="sug">${ic('repeat', 16)}<span>Предложение: придержать В 412 КО на 2 мин на ближайшей остановке — интервалы станут 4 и 4 мин вместо 6 и 2.</span></div>
+    <div class="btns"><button class="btn p" data-act="hold">${ic('check', 16)}Придержать В 412 КО</button><button class="btn s" data-act="toast" data-msg="Звонок водителю В 405 КО…">${ic('phone', 16)}Позвонить водителю</button></div>`;
+  const head = `<div class="chd"><span class="t">Электробус</span><span class="pill">В 412 КО</span><span class="r">71% ${ic('batteryCharging', 16)} 34 ${ic('busFront', 16)}</span></div>`;
+  if (S.step === 1) {
+    const rc = ['417', '380', '502'].map(n => [n, RESV[n]]).map(([n, r]) => `<button class="rc${n === S.res ? ' on' : ''}${r.off ? ' off' : ''}" ${r.off ? 'disabled aria-disabled="true"' : `data-pick="${n}"`}><span class="h">${PLATE[n]}<span class="tag${r.off ? ' no' : ''}">${r.tag}</span></span><span class="t13 mut">${r.from}</span><span class="t15 m">${r.km} км · ${r.min} мин</span></button>`).join('');
+    return `${head}<div class="bn crit">${ic('warning', 18)}<span>Поломка у «Пл. Мира» в 14:29</span><span class="r">простой 3 мин</span></div>
+      ${progress('14:04', '14:58', 3, '+3 мин', 'crit')}
+      <div class="rsh"><span class="t18">Направить резерв</span><span class="arr"><span style="transform:rotate(180deg)">${ic('chevron', 14)}</span><span>${ic('chevron', 14)}</span></span></div>
+      <div class="rcs">${rc}</div><div class="why">${ic('check', 16)}<span>${RESV[S.res].why}</span></div>
+      <button class="btn p" style="align-self:flex-start;height:40px;font-size:14px" data-act="assign">${ic('check', 16)}Назначить ${R}</button>`;
   }
-  function replacePanel() {
-    const card = (n, eta, place, avail, bat, driver, low) => {
-      const s = n === sel, off = n === '4502';
-      return `<button class="o-card${s ? ' sel' : ''}${off ? ' off' : ''}" data-pick="${n}"${off ? ' aria-disabled="true"' : ''} aria-pressed="${s}">
-        <span class="o-ctop"><span class="id">${ic('bus', 16)}<b>${n}</b>${n === '4417' ? `<span class="o-sm-badge">${ic('repeat', 12)}Быстрее всех</span>` : ''}</span><b>${eta}</b></span>
-        <span class="o-c12 o-mut">${place}</span><span class="o-div"></span>
-        <span class="bot"><span class="o-av${off ? ' no' : ''}"><i></i>${avail}</span>${bat ? `<span class="o-bat${low ? ' low' : ''}">${ic(low ? 'batteryLow' : 'batteryCharging', 14)}${bat}</span>` : ''}</span>
-        <span class="o-c12" style="color:${low ? 'var(--status-delay)' : 'var(--text-muted)'}">${driver}</span></button>`; };
-    const r = RV[sel];
-    return `<div class="o-panel o-rep"><div class="o-hd"><div style="flex:1"><div class="o-t16">Замена борта</div><div class="o-c12 o-mut">Поломка · сообщил водитель в 14:29</div></div><button class="o-x" data-act="close" aria-label="Закрыть">${ic('x', 16)}</button></div>
-      <div class="o-broken"><div style="display:flex;gap:8px;align-items:center"><span class="o-badge crit">${ic('warning', 12)}Авария</span><span class="o-t14">Борт 4412 · Маршрут №10</span></div>
-        <div class="o-fact">${ic('pin', 14)}ул. Ленина, 14 · у остановки «Пл. Мира»</div><div class="o-fact">${ic('stopwatch', 14)}Стоит 3 мин · в салоне ~34 пассажира</div><div class="o-fact">${ic('phone', 14)}<span>Сидоров П. · на связи · <u>Позвонить</u></span></div>
-        <div class="o-c12" style="color:var(--status-critical)">Без замены: разрыв 14 мин, 2 остановки</div></div>
-      <div style="display:flex;gap:8px;align-items:center"><span class="o-t14">Резерв</span><span class="o-c12 o-mut">свободные — по времени прибытия</span></div>
-      <div style="display:flex;flex-direction:column;gap:8px">${card('4417', '6 мин', 'Депо «Северное» · 2,4 км · электробус', 'Свободен', '82% · 140 км', 'Ковалёв А. · до 22:00')}
-        ${card('4380', '11 мин', 'Конечная «Парковая» · 4,9 км · дизель', 'Свободен', '', 'Миронова Е. · до 20:30')}
-        ${card('4502', '9 мин', 'Депо «Северное» · 3,1 км · электробус', 'Недоступен', '18% · 30 км', 'Не хватит на 2 круга', true)}</div>
-      <div class="o-sp"></div><div style="display:flex;flex-direction:column;gap:8px"><div class="o-c12 o-mut">Задание уйдёт водителю · прибытие ≈ ${r.arrive}</div><button class="o-btn" data-act="assign" style="width:100%">${ic('check', 16)}Назначить ${sel} на маршрут №10</button></div></div>`;
+  if (S.step < 4) {
+    const acc = S.step === 3;
+    return `${head}<div class="bn res">${ic('check', 18)}<span>${R} назначен в 14:32</span><span class="r">прибытие ${arrive()}</span></div>
+      ${progress('14:04', '14:58', 3, '+3 мин', 'crit')}
+      <div class="ride"><div class="h">${R} · едет на замену<span>${RESV[S.res].km} км · ${RESV[S.res].min} мин</span></div><div class="pb"><i style="width:${acc ? 30 : 6}%"></i></div>
+        <div class="ends" style="margin:0"><span>Депо «Северное» · 14:32</span><span>«Пл. Мира» · ${arrive()}</span></div>
+        <div class="ds"><i class="dot ${acc ? 'ok' : ''}"></i>${acc ? `Водитель ${R} принял · 14:33` : `Водитель ${R}: ждём подтверждения`}</div></div>
+      <div class="btns">${acc ? `<button class="btn s" data-act="toast" data-msg="Звонок водителю ${R}…">${ic('phone', 16)}Позвонить водителю ${R}</button>` : `<button class="btn s" data-act="phone">${ic('busFront', 16)}Телефон водителя</button>`}<button class="btn g" data-act="cancel">${ic('x', 14)}Отменить назначение</button></div>`;
   }
-  function donePanel() {
-    const r = RV[sel], t = id => (document.getElementById(id) || {}).textContent || '—';
-    const steps = [['Назначено диспетчером', '14:32'], [`Водитель ${r.driver} подтвердил`, t('t1') === '—' ? '—' : '14:32'], ['В пути к «Пл. Мира»', curStep >= 3 ? r.arrive : `≈ ${r.arrive}`], ['Встал в график маршрута №10', curStep >= 4 ? r.closed : '—'], ['4412 эвакуирован, заявка в депо', '—']];
-    const k = Math.max(1, curStep);
-    return `<div class="o-panel o-rep done"><div class="o-hd"><div style="flex:1"><div class="o-t16">Замена назначена</div><div class="o-c12 o-mut">Маршрут №10 · 14:32</div></div><button class="o-x" data-act="cancel" aria-label="Закрыть">${ic('x', 16)}</button></div>
-      <div class="o-assigned"><div style="display:flex;gap:8px;align-items:center">${ic('bus', 16)}<span class="o-t14">${sel} → вместо 4412</span></div><div style="font-size:28px;line-height:34px;font-weight:700">${r.eta} мин</div><div class="o-c12 o-mut">до остановки «Пл. Мира» · прибытие ${r.arrive}</div></div>
-      <div class="o-steps">${steps.map(([s, tm], i) => { const c = i < k ? 'done' : i === k ? 'now' : 'next'; return `<div class="o-step ${c}"><span class="m">${c === 'done' ? ic('check', 12) : ''}</span><span>${s}</span><time>${tm}</time></div>`; }).join('')}</div>
-      <div class="o-c12 o-mut">Инцидент перешёл в «Принятые»</div>
-      <div class="o-row" style="cursor:default"><span class="o-tile ack">${ic('warning', 16)}</span><span class="o-txt" style="color:var(--text-muted)"><b>Поломка · Маршрут №10</b><span>Борт 4412 · замена ${sel} в пути</span></span><span class="o-rt">3 мин${ic('chevron', 12)}</span></div>
-      <div class="o-sp"></div><div style="display:flex;gap:8px"><button class="o-btn sec" style="flex:1">${ic('phone', 16)}Связаться с ${sel}</button><button class="o-btn ghost" data-act="cancel">${ic('x', 16)}Отменить замену</button></div></div>`;
-  }
-  OPS.render = function (enter = false) {
-    const v = state.phase !== 'alert' ? '03' : OPS.view;
-    stage.dataset.v = v;
-    let left = v === '00' ? incidents(v) + summary(v) + legend() : v === '01' ? incidents(v, enter) + summary(v) : v === '02' ? replacePanel() : donePanel();
-    stage.innerHTML = mapLayer(v) + topBar(v) + left + ribbon(v);
-  };
-  // A dispatcher works at a desk; on a phone the 1440×900 screen keeps a readable scale and pans sideways instead of shrinking to a thumbnail.
-  const sizer = document.createElement('div'); sizer.className = 'o-sizer'; root.appendChild(sizer);
-  OPS.fit = function () {
-    const fitS = Math.min(innerWidth / 1440, innerHeight / 900), narrow = fitS < .6;
-    root.classList.toggle('narrow', narrow);
-    if (narrow) { const s = Math.min(1, innerHeight / 900); stage.style.transform = `scale(${s})`; sizer.style.width = 1440 * s + 'px'; sizer.style.height = 900 * s + 'px'; }
-    else { stage.style.transform = `translate(${(innerWidth - 1440 * fitS) / 2}px, ${(innerHeight - 900 * fitS) / 2}px) scale(${fitS})`; sizer.style.width = sizer.style.height = '1px'; }
-  };
-  OPS.enter = function () {
-    OPS.fit(); OPS.render();
-    if (!OPS.introDone && state.phase === 'alert' && OPS.view === '00') {
-      OPS.introDone = true; setTimeout(() => { if (OPS.view === '00') { OPS.view = '01'; OPS.render(true); } }, reduce ? 0 : 2600);
-    }
-  };
-  addEventListener('resize', () => OPS.fit());
-  root.addEventListener('click', e => {
-    const m = e.target.closest('[data-m]'); if (m) { setMode(m.dataset.m); return; }
-    const pick = e.target.closest('[data-pick]'); if (pick) { if (pick.dataset.pick !== '4502') { select(pick.dataset.pick, false); } return; }
-    const b = e.target.closest('[data-bus]'); if (b && OPS.view === '02' && state.phase === 'alert' && (b.dataset.bus === '4417' || b.dataset.bus === '4380')) { select(b.dataset.bus, false); return; }
-    const a = e.target.closest('[data-act]'); if (!a) return;
-    const act = a.dataset.act;
-    if (act === 'theme') document.getElementById('theme').click();
-    else if (act === 'open' && state.phase === 'alert' && OPS.view !== '00') { OPS.acked = true; OPS.view = '02'; OPS.render(); }
-    else if (act === 'close') { OPS.view = '01'; OPS.render(); }
-    else if (act === 'assign') { document.getElementById('assign').click(); }
-    else if (act === 'cancel') { if (state.phase !== 'alert') document.getElementById('assign').click(); OPS.view = '01'; OPS.render(); }
-  });
-  root.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role="button"]')) { e.preventDefault(); e.target.click(); } });
-})();
-document.getElementById('opsBack').addEventListener('click', () => setMode('3d'));
-function opsRender() { if (OPS && mode === '2d') OPS.render(); }
+  return `<span class="t18">Повтор аварии на карте</span><span class="t14 mut">14:29–14:52: где стояли борта, как рос разрыв, когда пришла замена.</span>
+    <div class="tl"><i class="tk"></i><i style="left:0;background:var(--crit)"></i><i style="left:13%;background:var(--res)"></i><i style="left:39%;background:var(--muted)"></i><i style="left:100%;background:var(--muted)"></i></div>
+    <div class="ends" style="margin:0"><span>14:29 поломка</span><span>14:52 норма</span></div>
+    <div class="btns"><a class="btn p" href="map.html">${ic('check', 16)}Смотреть повтор в 3D</a><button class="btn s" data-act="toast" data-msg="Разбор добавлен в отчёт смены">В отчёт смены</button></div>`;
+}
+function phone() {
+  const R = PLATE[S.res];
+  return `<div class="veil" data-act="phoneClose"><div class="phone" role="dialog" aria-label="Телефон водителя ${R}" data-stop="1">
+    <div class="sb"><span>14:32</span><span class="t12">5G</span></div>
+    <div class="ct"><div class="t14 mut" style="display:flex;gap:8px;align-items:center">${ic('busFront', 20)}${R} · смена до 22:00</div>
+      <div class="na"><span class="k">НОВОЕ НАЗНАЧЕНИЕ</span><span class="t">Замена на маршруте №10</span><span class="d">Вместо В 412 КО — поломка у «Пл.&nbsp;Мира». Пассажиры ждут на остановке.</span></div>
+      <div class="mini"><svg width="342" height="190" viewBox="0 0 342 190" aria-hidden="true"><path d="M0 118 L342 64" stroke="var(--s4)" stroke-width="10"/><path d="M128 0 L188 190" stroke="var(--s4)" stroke-width="10"/><path d="M250 0 L290 190" stroke="var(--s4)" stroke-width="6"/>
+        <path d="M40 150 C110 150 120 82 200 76 C250 72 272 52 296 40" stroke="var(--route)" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="40" cy="150" r="7" fill="var(--fg)"/><circle cx="296" cy="40" r="8" fill="var(--crit)" stroke="var(--s1)" stroke-width="3"/>
+        <text x="20" y="176" font-size="12" font-weight="500" fill="var(--fg)">Депо «Северное»</text><text x="226" y="62" font-size="12" font-weight="500" fill="var(--fg)">Пл. Мира</text></svg>
+        <span class="eta" style="left:120px;top:100px;background:var(--acc);color:var(--on-acc);border-color:transparent">${RESV[S.res].km} км · ${RESV[S.res].min} мин</span></div>
+      <div><div class="kv"><span class="mut">Прибыть к</span><span>${arrive()}</span></div><div class="kv"><span class="mut">Дальше</span><span>круг по №10 до 15:32</span></div><div class="kv"><span class="mut">${S.res === '380' ? 'Топливо' : 'Заряд'}</span><span>${S.res === '380' ? 'дизель · полный бак' : '82% · хватит на 3 круга'}</span></div></div>
+      <span style="flex:1"></span>
+      <button class="btn p lg" data-act="accept">${ic('check', 18)}Принял, выезжаю</button><button class="btn s lg" data-act="decline">${ic('phone', 18)}Не могу выехать</button>
+      <div class="t13 mut" style="text-align:center">Нет ответа 1 мин — диспетчер позвонит сам</div></div><div class="hb"><i></i></div></div></div>`;
+}
+const DEMO = [
+  ['1/5 · смена идёт, 14:28', 'Дальше: авария'], ['2/5 · выберите резерв', ''], ['3/5 · ждём водителя', 'Телефон водителя'],
+  ['4/5 · замена в пути', 'К разбору 15:05'], ['5/5 · разбор аварии', 'Сначала'],
+];
+function render() {
+  const [st, nx] = DEMO[S.step];
+  stage.innerHTML = `<div class="map" role="img" aria-label="Карта района: маршрут №10"></div>${overlay()}${rail()}${routes()}${trips()}
+    <nav class="mode" aria-label="Режим"><a class="on" href="./" aria-current="page">Смена</a><a href="map.html?mode=2d">Карта района</a><a href="map.html">3D</a></nav>
+    <div class="demo" aria-live="polite"><span class="st">Сценарий ${st}</span>${nx ? `<button data-act="next">${nx} →</button>` : ''}</div>
+    <div class="zoom"><div>+</div><div>−</div></div><div class="lay">${ic('layers', 20)}</div><span class="attr">© OpenStreetMap</span>
+    <section class="pnl card" id="card" aria-live="polite">${card()}</section>${S.phone ? phone() : ''}<div class="toast" id="toast"></div>`;
+  const c = document.getElementById('card'); c.style.top = (892 - c.offsetHeight) + 'px';
+}
+let tt; function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 2400); }
+function go(step) { S.step = step; if (step === 1) S.t0 = Date.now(); if (step === 4) S.tab = 'log'; if (step === 0) { S.tab = 'trips'; S.res = '417'; } render(); }
 
-function retheme() { applyTheme(); if (state.phase !== 'alert') { M.gap.color = new THREE.Color(css('--res')); M.gapGlow.color = new THREE.Color(css('--res')); } }
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', retheme);
-new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-// manual theme switch: the page starts from the system theme, the button flips it (remembered per viewer)
-try { const t = localStorage.getItem('dispatch-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
-
-document.getElementById('theme').addEventListener('click', () => {
-  const dark = new THREE.Color(css('--bg')).getHSL({}).l < .3, next = dark ? 'light' : 'dark';
-  document.documentElement.dataset.theme = next; try { localStorage.setItem('dispatch-theme', next); } catch (e) {}
+stage.addEventListener('click', e => {
+  if (e.target.closest('[data-stop]') && !e.target.closest('[data-act]')) return;
+  const tab = e.target.closest('[data-tab]'); if (tab) { S.tab = tab.dataset.tab; render(); return; }
+  const pick = e.target.closest('[data-pick]'); if (pick && S.step === 1) { S.res = pick.dataset.pick; render(); return; }
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  const act = a.dataset.act;
+  if (act === 'theme') { const dark = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim().toLowerCase() === '#121417'; const n = dark ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('dispatch-theme', n); } catch (err) {} }
+  else if (act === 'next') { if (S.step === 0) go(1); else if (S.step === 2) { S.phone = true; render(); } else if (S.step === 3) go(4); else if (S.step === 4) go(0); }
+  else if (act === 'hold') toast('Команда ушла водителю В 412 КО: стоянка 2 мин на ближайшей остановке');
+  else if (act === 'toast') toast(a.dataset.msg);
+  else if (act === 'assign') { go(2); toast(`Задание ушло водителю ${PLATE[S.res]}`); }
+  else if (act === 'cancel') go(1);
+  else if (act === 'phone') { S.phone = true; render(); }
+  else if (act === 'phoneClose') { S.phone = false; render(); }
+  else if (act === 'accept') { S.phone = false; go(3); toast(`Водитель ${PLATE[S.res]} принял задание`); }
+  else if (act === 'decline') { S.phone = false; const other = S.res === '417' ? '380' : '417'; S.res = other; go(1); toast(`Водитель отказался. Рекомендация пересчитана: ${PLATE[other]}`); }
 });
-applyTheme(); resize(); select('4417', false);
-const home = { dist: innerWidth < 640 ? 230 : 175, pol: .95, az: Math.PI / 4 };
-if (!reduce) { Object.assign(cam, { dist: home.dist * 1.6, pol: .45, az: home.az - .9 }); fly(home, 3200); } else Object.assign(cam, home);
-requestAnimationFrame(frame);
+addEventListener('keydown', e => { if (e.key === 'Escape' && S.phone) { S.phone = false; render(); } });
+setInterval(() => { const t = document.getElementById('tmr'); if (t) t.textContent = timer(); }, 1000);
+
+// fit the 1440×900 screen to the window; on a phone keep a readable scale and pan sideways
+const root = document.getElementById('root'), sizer = document.getElementById('sizer');
+function fit() {
+  const s = Math.min(innerWidth / 1440, innerHeight / 900), narrow = s < .6;
+  root.classList.toggle('narrow', narrow);
+  if (narrow) { const k = Math.min(1, innerHeight / 900); stage.style.transform = `scale(${k})`; sizer.style.width = 1440 * k + 'px'; sizer.style.height = 900 * k + 'px'; }
+  else { stage.style.transform = `translate(${(innerWidth - 1440 * s) / 2}px, ${(innerHeight - 900 * s) / 2}px) scale(${s})`; sizer.style.width = sizer.style.height = '1px'; }
+}
+try { const t = localStorage.getItem('dispatch-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+addEventListener('resize', fit); fit();
+const q = new URLSearchParams(location.search).get('step'); go(q ? Math.max(0, Math.min(4, +q)) : 0);
+if (!q && !matchMedia('(prefers-reduced-motion: reduce)').matches) setTimeout(() => { if (S.step === 0) go(1); }, 6000);
+document.fonts && document.fonts.ready.then(render);
 })();
 </script>
-
 </body>
 </html>

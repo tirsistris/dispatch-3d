@@ -30,6 +30,15 @@
 .modes{position:fixed;top:16px;right:16px;z-index:60;display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--MB);border:1px solid var(--ML);box-shadow:0 4px 16px var(--MS);font:13px/18px "Inter",system-ui,sans-serif;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
 .modes a{padding:7px 14px;border-radius:9px;color:var(--MM);text-decoration:none;font-weight:500;white-space:nowrap}
 .modes a:hover{color:var(--MF)}
+.modes{align-items:stretch}
+.modes .mt{display:flex;align-items:center;padding:0 10px 0 12px;font-weight:600;font-size:15px;color:var(--MF);font-variant-numeric:tabular-nums}
+.modes .mth{width:34px;display:grid;place-items:center;border-radius:9px;color:var(--MF);background:none;border:0;cursor:pointer;padding:0}
+.modes .mth:hover{background:var(--MA)}
+.modes .mth svg{width:16px;height:16px}
+.mth .sun{display:none}
+:root[data-theme="dark"] .mth .sun{display:block} :root[data-theme="dark"] .mth .moon{display:none}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .mth .sun{display:block} :root:not([data-theme="light"]) .mth .moon{display:none} }
+.modes .msep{width:1px;background:var(--ML);margin:6px 4px}
 .modes a.on{background:var(--MA);color:var(--MF);font-weight:600}
 :root{--MB:var(--s1);--ML:var(--line);--MS:var(--shadow);--MM:var(--muted);--MA:var(--s3);--MF:var(--fg)}
 /* The shift screen from Figma (page «v3 · Рабочий экран», 1440×900): panels float over a real-city map.
@@ -240,7 +249,7 @@ svg.i{flex:none;display:block}
 </style>
 </head>
 <body>
-<nav class="modes" aria-label="Режим прототипа"><a href="./" class="on" aria-current="page">Смена</a><a href="map.html?mode=2d" data-m="2d" class="">Карта района</a><a href="map.html" data-m="3d" class="">3D</a></nav>
+<nav class="modes" aria-label="Режим прототипа"><span class="mt" id="hudTime">14:28</span><button class="mth" id="hudTheme" aria-label="Переключить тему"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button><span class="msep"></span><a href="./" class="on" aria-current="page">Смена</a><a href="map.html?mode=2d" data-m="2d" class="">Карта района</a><a href="map.html" data-m="3d" class="">3D</a></nav>
 <div id="root"><div class="stage" id="stage"></div><div class="sizer" id="sizer"></div></div>
 <script>
 (function () {
@@ -325,7 +334,7 @@ function rail() {
     <button class="ri" aria-label="Инциденты">${ic('warning', 20)}${S.step === 1 ? '<span class="badge">1</span>' : ''}</button>
     <button class="ri" aria-label="Депо">${ic('depot', 20)}</button>
     <button class="ri" aria-label="Слои">${ic('layers', 20)}</button>
-    <span class="sp"></span><button class="ri" data-act="theme" aria-label="Переключить тему">${ic('sun', 20)}</button></nav>`;
+  </nav>`;
 }
 function topBlock() {
   const R = PLATE[S.res];
@@ -341,7 +350,7 @@ function routes() {
     const s = n === 10 ? `<div class="s" style="color:${sub10[1]}">${sub10[0]}</div>` : late ? `<div class="s"><i class="dot"></i>${late}</div>` : `<div class="s">Интервал в норме</div>`;
     return `<div class="rrow${n === 10 ? ' on' : ''}"><span class="num">${n}</span><div class="rtx"><div class="t15">${name}</div>${s}</div><span class="cnt">${k}</span></div>`;
   }).join('');
-  return `<section class="pnl routes" aria-label="Маршруты района"><div class="rhead"><div class="rtitle"><h1>Северный район</h1><span class="t15 m mut">${clock()}</span></div>${topBlock()}
+  return `<section class="pnl routes" aria-label="Маршруты района"><div class="rhead"><div class="rtitle"><h1>Северный район</h1></div>${topBlock()}
     <div class="srch"><div class="inp">${ic('search', 18)}Маршрут, госномер</div><span class="ib">${ic('filter', 18)}</span></div></div>
     <div class="tabs"><span class="tab">Все</span><span class="tab on">С отклонением · 4</span><span class="tab">Резерв · 3</span></div>
     <div class="thead caps"><span>Маршрут</span><span>На линии</span></div>${rows}</section>`;
@@ -413,7 +422,7 @@ function overlay() {
   if (inc) html += `<span class="ack" style="left:${CRASH[0]}px;top:${CRASH[1]}px"></span>${S.step === 1 ? `<span class="ring" style="left:${CRASH[0]}px;top:${CRASH[1]}px"></span><span class="ring b" style="left:${CRASH[0]}px;top:${CRASH[1]}px"></span>` : ''}<span class="pin" style="left:${CRASH[0]}px;top:${CRASH[1] - 46}px">${ic('warning', 13)}412</span><svg class="ov"><path d="M${CRASH[0]} ${CRASH[1] - 46} V ${CRASH[1]}" stroke="var(--crit)" stroke-width="2"/><circle cx="${CRASH[0]}" cy="${CRASH[1]}" r="6" fill="var(--crit)" stroke="var(--s1)" stroke-width="2"/></svg>`;
   // route buses alternate above / below the line
   const ids = Object.keys(p).sort((a, b) => p[a] - p[b]); let up = true;
-  for (const n of ids) { if (inc && n === '412') continue; const [x, y] = pt(p[n]); if (y < 90 && x > 1100) { up = !up; continue; } const late = n === '405' && S.step < 4;
+  for (const n of ids) { if (inc && n === '412') continue; const [x, y] = pt(p[n]); if (y < 90 && x > 1000) { up = !up; continue; } const late = n === '405' && S.step < 4;
     html += `<span class="mk${late ? ' delay' : ''}" style="left:${x}px;top:${up ? y - 32 : y + 8}px;transform:translateX(-50%)">${ic(late ? 'stopwatch' : 'bus', 13)}${n}${late ? '<span class="x">+4</span>' : ''}</span>`; up = !up; }
   if (inc) { /* 412 hidden under the pin */ }
   const other = [['204', 1067, 140], ['380', 1259, 500]];
@@ -487,17 +496,21 @@ function render() {
     <div class="zoom"><div>+</div><div>−</div></div><div class="lay">${ic('layers', 20)}</div><span class="attr">© OpenStreetMap</span>
     <section class="pnl card" id="card" aria-live="polite">${card()}</section>${S.phone ? phone() : ''}<div class="toast" id="toast"></div>`;
   const c = document.getElementById('card'); c.style.top = (892 - c.offsetHeight) + 'px';
+  document.getElementById('hudTime').textContent = clock();
 }
 let tt; function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 2400); }
 function go(step) { S.step = step; if (step === 1) S.t0 = Date.now(); if (step === 4) S.tab = 'log'; if (step === 0) { S.tab = 'trips'; S.res = '417'; } render(); }
 
+function toggleTheme() { const dark = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim().toLowerCase() === '#121417'; const n = dark ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('dispatch-theme', n); } catch (err) {} }
+document.getElementById('hudTheme').addEventListener('click', toggleTheme);
 stage.addEventListener('click', e => {
   if (e.target.closest('[data-stop]') && !e.target.closest('[data-act]')) return;
   const tab = e.target.closest('[data-tab]'); if (tab) { S.tab = tab.dataset.tab; render(); return; }
   const pick = e.target.closest('[data-pick]'); if (pick && S.step === 1) { S.res = pick.dataset.pick; render(); return; }
   const a = e.target.closest('[data-act]'); if (!a) return;
   const act = a.dataset.act;
-  if (act === 'theme') { const dark = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim().toLowerCase() === '#121417'; const n = dark ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('dispatch-theme', n); } catch (err) {} }
+  if (act === 'theme') { toggleTheme(); }
+  else if (false) { const dark = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim().toLowerCase() === '#121417'; const n = dark ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('dispatch-theme', n); } catch (err) {} }
   else if (act === 'next') { if (S.step === 0) go(1); else if (S.step === 2) { S.phone = true; render(); } else if (S.step === 3) go(4); else if (S.step === 4) go(0); }
   else if (act === 'hold') toast('Команда ушла водителю В 412 КО: стоянка 2 мин на ближайшей остановке');
   else if (act === 'toast') toast(a.dataset.msg);
@@ -518,6 +531,8 @@ function fit() {
   root.classList.toggle('narrow', narrow);
   if (narrow) { const k = Math.min(1, innerHeight / 900); stage.style.transform = `scale(${k})`; sizer.style.width = 1440 * k + 'px'; sizer.style.height = 900 * k + 'px'; }
   else { stage.style.transform = `translate(${(innerWidth - 1440 * s) / 2}px, ${(innerHeight - 900 * s) / 2}px) scale(${s})`; sizer.style.width = sizer.style.height = '1px'; }
+  // the shared top-right controls sit in the screen's own corner, not the window's
+  const hud = document.querySelector('.modes'); hud.style.right = (narrow ? 16 : (innerWidth - 1440 * s) / 2 + 16 * s) + 'px'; hud.style.top = (narrow ? 16 : (innerHeight - 900 * s) / 2 + 16 * s) + 'px';
 }
 try { const t = localStorage.getItem('dispatch-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
 addEventListener('resize', fit); fit();

@@ -413,7 +413,7 @@ function overlay() {
   if (inc) html += `<span class="ack" style="left:${CRASH[0]}px;top:${CRASH[1]}px"></span>${S.step === 1 ? `<span class="ring" style="left:${CRASH[0]}px;top:${CRASH[1]}px"></span><span class="ring b" style="left:${CRASH[0]}px;top:${CRASH[1]}px"></span>` : ''}<span class="pin" style="left:${CRASH[0]}px;top:${CRASH[1] - 46}px">${ic('warning', 13)}412</span><svg class="ov"><path d="M${CRASH[0]} ${CRASH[1] - 46} V ${CRASH[1]}" stroke="var(--crit)" stroke-width="2"/><circle cx="${CRASH[0]}" cy="${CRASH[1]}" r="6" fill="var(--crit)" stroke="var(--s1)" stroke-width="2"/></svg>`;
   // route buses alternate above / below the line
   const ids = Object.keys(p).sort((a, b) => p[a] - p[b]); let up = true;
-  for (const n of ids) { if (inc && n === '412') continue; const [x, y] = pt(p[n]); const late = n === '405' && S.step < 4;
+  for (const n of ids) { if (inc && n === '412') continue; const [x, y] = pt(p[n]); if (y < 90 && x > 1100) { up = !up; continue; } const late = n === '405' && S.step < 4;
     html += `<span class="mk${late ? ' delay' : ''}" style="left:${x}px;top:${up ? y - 32 : y + 8}px;transform:translateX(-50%)">${ic(late ? 'stopwatch' : 'bus', 13)}${n}${late ? '<span class="x">+4</span>' : ''}</span>`; up = !up; }
   if (inc) { /* 412 hidden under the pin */ }
   const other = [['204', 1067, 140], ['380', 1259, 500]];
